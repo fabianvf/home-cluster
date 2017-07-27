@@ -1,0 +1,81 @@
+---
+
+- name: create gluster namespace
+  k8s_v1_namespace:
+    name: gluster
+
+- name: create daemon set
+  k8s_v1beta1_daemon_set:
+    name: gluster
+    namespace: gluster
+    labels:
+      name: gluster
+    selector_match_labels:
+      name: gluster
+    spec_template_metadata_labels:
+      name: gluster
+    spec_template_spec_containers:
+    - name: gluster
+      image: gluster/gluster-centos
+      image_pull_policy: IfNotPresent
+      liveness_probe:
+        exec:
+          command:
+          - "/bin/bash"
+          - "-c"
+          - systemctl status glusterd.service
+        failure_threshold: 3
+        period_seconds: 10
+        success_threshold: 1
+        timeout_seconds: 1
+      readiness_probe:
+        exec:
+          command:
+          - "/bin/bash"
+          - "-c"
+          - systemctl status glusterd.service
+        failure_threshold: 3
+        period_seconds: 10
+        success_threshold: 1
+        timeout_seconds: 1
+      resources: {}
+      security_context:
+        privileged: true
+      termination_message_path: "/dev/termination-log"
+      volume_mounts:
+      - mount_path: "/mnt/brick1"
+        name: gluster-brick
+      - mount_path: "/etc/gluster"
+        name: gluster-etc
+      - mount_path: "/var/log/gluster"
+        name: gluster-logs
+      - mount_path: "/var/lib/glusterd"
+        name: gluster-config
+      - mount_path: "/dev"
+        name: gluster-dev
+      - mount_path: "/sys/fs/cgroup"
+        name: gluster-cgroup
+    dns_policy: ClusterFirst
+    host_network: true
+    restart_policy: Always
+    security_context: {}
+    termination_grace_period_seconds: 1
+    volumes:
+    - host_path:
+        path: "/mnt/brick1"
+      name: gluster-brick
+    - host_path:
+        path: "/etc/gluster"
+      name: gluster-etc
+    - host_path:
+        path: "/var/log/gluster"
+      name: gluster-logs
+    - host_path:
+        path: "/var/lib/glusterd"
+      name: gluster-config
+    - host_path:
+        path: "/dev"
+      name: gluster-dev
+    - host_path:
+        path: "/sys/fs/cgroup"
+      name: gluster-cgroup
