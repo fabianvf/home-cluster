@@ -1,0 +1,18 @@
+DEFAULT pxeboot
+TIMEOUT 60
+PROMPT 20
+
+MENU TITLE Fabian's house PXE Menu
+
+
+LABEL pxeboot
+        MENU LABEL Atomic Host (CentOS 7)
+        KERNEL vmlinuz
+        APPEND rootflags=loop ks=http://fabianism.local/kickstarts/centos-atomic.cfg root=live:/atomic.iso debug rootfstype=auto initrd=initrd.img inst.stage2=hd:LABEL=CentOS\x20Atomic\x20Host\x207\x20x86_64 quiet
+
+LABEL local
+        MENU LABEL Boot local hard drive
+        LOCALBOOT 0
+
+ONERROR local
+ONTIMEOUT local

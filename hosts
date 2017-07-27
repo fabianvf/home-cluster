@@ -1,0 +1,28 @@
+# openshift configuration
+[masters]
+node1.local openshift_node_labels="{'region': 'infra', 'zone': 'default'}"
+
+[nodes]
+node1.local
+node2.local
+node3.local
+node4.local
+node5.local
+
+[OSEv3:children]
+masters
+nodes
+
+[OSEv3:vars]
+openshift_disable_check=memory_availability
+ansible_ssh_user=root
+ansible_become=true
+deployment_type=origin
+openshift_image_tag=v1.5.0
+openshift_deployment_type=origin
+openshift_master_default_subdomain="apps.fabianism.local"
+openshift_master_identity_providers="[{'name': 'htpasswd_auth','login': 'true', 'challenge': 'true','kind': 'AllowAllPasswordIdentityProvider'}]"
+openshift_node_labels="{'region': 'primary', 'zone': 'default'}"
+openshift_schedulable=true
+openshift_set_hostname=true
+os_update=true
