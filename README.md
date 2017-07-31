@@ -30,7 +30,7 @@ My wife is a photographer, and generates between 1TB and 3TB of media per year. 
   - [ ] [Seafile](https://www.seafile.com/en/home/)
   - [ ] [Collabora online](https://www.collaboraoffice.com/)
   - [ ] [NextCloud](https://nextcloud.com/) (probably mutually exclusive with seafile + collabora)
-  - [ ] [ZoneMinder(https://zoneminder.com/)
+  - [ ] [ZoneMinder](https://zoneminder.com/)
   - [ ] [Monica](https://monicahq.com/)
   - [ ] [Ambar](https://ambar.cloud/)
   - [ ] [Emby](https://emby.media/)
