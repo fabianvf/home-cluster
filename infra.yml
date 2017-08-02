@@ -1,5 +1,14 @@
 ---
 
+
+# TODO
+# Add play to install/configure foreman with tftp and dns
+# Add centos-atomic pxeboot image to the foreman instance
+# Create host entries for all the openshift nodes
+# set those nodes to pxeboot from the centos-atomic image
+# Either manually boot/reboot them if possible, or pause and
+# wait for user confirmation
+
 - name: wait for hosts up
   hosts: nodes
   gather_facts: false
@@ -71,9 +80,8 @@
   when: install_openshift|default(True)
 
 # TODO: https://github.com/ceph/ceph-docker/tree/master/examples/kubernetes
-# Write my own playbook that uses templates like those above
-# - include: ceph-openshift/deploy.yml
-#   when: install_ceph|default(False)
+# Use heketi to install gluster on openshift
+# Write a role that will configure the gluster volumes and such
 
 - hosts: oo_first_master
   gather_facts: false
