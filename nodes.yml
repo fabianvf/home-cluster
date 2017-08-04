@@ -1,0 +1,3 @@
+- include: atomic.yml
+- include: openshift_wildcard.yml
+- include: openshift.yml

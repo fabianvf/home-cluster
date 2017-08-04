@@ -1,0 +1,83 @@
+---
+
+- name: Copy templates
+  copy:
+    src: "{{ item }}"
+    dest: "/tmp/templates/{{ item}}"
+  with_fileglob:
+    - '*'
+
+- name: Create Fedora Atomic 26 installation medium
+  command: |
+    hammer medium create
+      --name "Fedora Atomic 26 Mirror"
+      --os-family "RedHat"
+      --path "https://dl.fedoraproject.org/pub/alt/atomic/stable/Fedora-Atomic-26-20170723.0/Atomic/x86_64/os/"
+
+- name: Create discovery PXELinux template
+  command: |
+    hammer template create
+      --name "Discovery PXELinux Template"
+      --type "PXELinux"
+      --locked "no"
+      --file template_DiscoveryPXEBoot
+
+- name: Create Fedora Atomic 26 Kickstart template
+  command: |
+    hammer template create
+      --name" Fedora Atomic 26 Kickstart"
+      --type "provision"
+      --locked "no"
+      --file template_FedoraAtomicKickstart
+
+- name: Create Fedora Atomic 26 Operating System
+  command:|
+    hammer os create
+      --family "Redhat"
+      --name "Fedora-Atomic"
+      --major "26"
+      --partition-tables 'Kickstart default'
+      --architectures x86_64
+      --media "Fedora Atomic 26 Mirror"
+      --provisioning-templates 'Kickstart default PXELinux,Fedora Atomic 26 Kickstart'
+
+- name: Associate templates with OS
+  command:|
+    hammer template add-operatingsystem
+      --name {{ item }}
+      --operatingsystem 'Fedora-Atomic'
+  with_items:
+    - 'Fedora Atomic 26 Kickstart'
+    - 'Kickstart default PXELinux'
+
+- name: Create the openshift-nodes hostgroup
+  command:|
+    hammer hostgroup create
+      --architecture "x86_64"
+      --name "openshift-nodes"
+      --operatingsystem "Fedora Atomic 26"
+      --environment "production"
+      --subnet "default"
+      --domain "home.fabianism.us"
+      --architecture "x86_64"
+      --partition-table "Kickstart default"
+      --root-pass '{{ default_password }}'
+
+- name: Create default discovery provision rules
+  command:|
+    hammer discovery-rule create
+      --enabled yes
+      --hostgroup "openshift-nodes"
+      --hostname "node<%=@host.facts['ipaddress'].split('.')[-1] %>"
+      --name "default"
+      --search "*"
+      
+- name: Update settings
+  command:|
+    hammer settings set
+      --name "{{ item.0 }}"
+      --value "{{ item.1 }}"
+    with_items:
+      - ['global_PXELinux', 'Discovery PXELinux Template']
+      - ['ansible_ssh_pass', '{{ default_password }}']
+      - ['discovery_auto', 'true']

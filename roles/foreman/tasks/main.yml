@@ -1,0 +1,37 @@
+- name: install packages
+  package:
+    name: '{{ item }}'
+  with_items:
+    - epel-release
+    - "https://yum.theforeman.org/releases/1.15/el7/x86_64/foreman-release.rpm"
+    - foreman-installer
+    - tfm-rubygem-hammer_cli_foreman_discovery
+
+- name: Run foreman installer
+  command: |
+    foreman-installer
+      --enable-foreman-plugin-ansible
+      --enable-foreman-plugin-discovery
+
+- name: Download foreman discovery images
+  command: foreman-installer --foreman-plugin-discovery-install-images=true
+
+- name: open ports
+  firewalld:
+    port: '{{ item }}'
+    state: enabled
+    permanent: true
+    immediate: true
+  with_items:
+    - 53/tcp
+    - 67-69/udp
+    - 80/tcp
+    - 443/tcp
+    - 3000/tcp
+    - 3306/tcp
+    - 5910-5930/tcp
+    - 5432/tcp
+    - 8140/tcp
+    - 8443/tcp
+
+- include: fedora-atomic-26.yml

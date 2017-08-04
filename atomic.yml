@@ -1,0 +1,16 @@
+- name: wait for hosts to come up, upgrade if out of date
+  hosts: nodes
+  gather_facts: false
+  pre_tasks:
+  - name: "Wait for host up"
+    local_action: wait_for
+    args:
+      host: "{{ inventory_hostname }}"
+      port: 22
+      state: started
+      delay: 10
+      timeout: 3600
+  - setup:
+  roles:
+    - atomic_upgrade
+    - reboot

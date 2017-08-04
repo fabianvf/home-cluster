@@ -1,0 +1,2 @@
+- include: foreman.yml
+- include: nodes.yml
