@@ -1,5 +1,11 @@
 ---
 
+- name: make template dir
+  file:
+    path: /tmp/templates/
+    state: directory
+    mode: 0777
+
 - name: Copy templates
   copy:
     src: "{{ item }}"
