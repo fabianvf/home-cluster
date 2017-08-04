@@ -31,7 +31,7 @@
       --file template_FedoraAtomicKickstart
 
 - name: Create Fedora Atomic 26 Operating System
-  command:|
+  command: |
     hammer os create
       --family "Redhat"
       --name "Fedora-Atomic"
@@ -42,7 +42,7 @@
       --provisioning-templates 'Kickstart default PXELinux,Fedora Atomic 26 Kickstart'
 
 - name: Associate templates with OS
-  command:|
+  command: |
     hammer template add-operatingsystem
       --name {{ item }}
       --operatingsystem 'Fedora-Atomic'
@@ -51,7 +51,7 @@
     - 'Kickstart default PXELinux'
 
 - name: Create the openshift-nodes hostgroup
-  command:|
+  command: |
     hammer hostgroup create
       --architecture "x86_64"
       --name "openshift-nodes"
@@ -64,7 +64,7 @@
       --root-pass '{{ default_password }}'
 
 - name: Create default discovery provision rules
-  command:|
+  command: |
     hammer discovery-rule create
       --enabled yes
       --hostgroup "openshift-nodes"
@@ -73,7 +73,7 @@
       --search "*"
       
 - name: Update settings
-  command:|
+  command: |
     hammer settings set
       --name "{{ item.0 }}"
       --value "{{ item.1 }}"
