@@ -8,23 +8,23 @@
   post_tasks:
     - name: Time to boot some hosts!
       pause:
-        prompt:>
-        ======================================================================================
-        | Foreman has been configured with tftp and is available at {{ inventory_hostname }} |
-        |                                                                                    |
-        | Please ensure your router has been configured to route tftp request to Foreman     |
-        |                                                                                    |
-        | If your network has been properly configured, and your hosts are set to pxeboot,   |
-        | all you need to do now is boot the hosts and wait for them to come up.             |
-        |                                                                                    |
-        | Once your hosts are done provisioning, you can acknowledge this prompt to continue |
-        | with the installation.                                                             |
-        |                                                                                    |
-        | If the installation is cancelled here for whatever reason, you can continue the    |
-        | install manually by running:.                                                      |
-        |                                                                                    |
-        |      ansible-playbook -i hosts -i dynamic_inventory/foreman.py nodes.yml           |
-        |                                                                                    |
-        ======================================================================================
+        prompt: |
+          ======================================================================================
+          = Foreman has been configured with tftp and is available at {{ inventory_hostname }}
+          =
+          = Please ensure your router has been configured to route tftp request to Foreman
+          =
+          = If your network has been properly configured, and your hosts are set to pxeboot,
+          = all you need to do now is boot the hosts and wait for them to come up.
+          =
+          = Once your hosts are done provisioning, you can acknowledge this prompt to continue
+          = with the installation.
+          =
+          = If the installation is cancelled here for whatever reason, you can continue the
+          = install manually by running:.
+          =
+          =      ansible-playbook -i hosts -i dynamic_inventory/foreman.py nodes.yml
+          =
+          ======================================================================================
     - name: Refresh inventory from foreman
       meta: refresh_inventory

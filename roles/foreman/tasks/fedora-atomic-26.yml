@@ -9,7 +9,7 @@
 - name: Copy templates
   copy:
     src: "{{ item }}"
-    dest: "/tmp/templates/{{ item}}"
+    dest: "/tmp/templates/{{ item.split('/')[-1] }}"
   with_fileglob:
     - '*'
 
@@ -17,8 +17,11 @@
   command: |
     hammer medium create
       --name "Fedora Atomic 26 Mirror"
-      --os-family "RedHat"
+      --os-family "Redhat"
       --path "https://dl.fedoraproject.org/pub/alt/atomic/stable/Fedora-Atomic-26-20170723.0/Atomic/x86_64/os/"
+  register: result
+  failed_when: result.rc |int > 0 and 'already been taken' not in result.stderr
+  changed_when: "'already been taken' not in result.stderr"
 
 - name: Create discovery PXELinux template
   command: |
@@ -26,15 +29,21 @@
       --name "Discovery PXELinux Template"
       --type "PXELinux"
       --locked "no"
-      --file template_DiscoveryPXEBoot
+      --file /tmp/templates/template_DiscoveryPXEBoot
+  register: result
+  failed_when: result.rc |int > 0 and 'already been taken' not in result.stderr
+  changed_when: "'already been taken' not in result.stderr"
 
 - name: Create Fedora Atomic 26 Kickstart template
   command: |
     hammer template create
-      --name" Fedora Atomic 26 Kickstart"
+      --name "Fedora Atomic 26 Kickstart"
       --type "provision"
       --locked "no"
-      --file template_FedoraAtomicKickstart
+      --file /tmp/templates/template_FedoraAtomicKickstart
+  register: result
+  failed_when: result.rc |int > 0 and 'already been taken' not in result.stderr
+  changed_when: "'already been taken' not in result.stderr"
 
 - name: Create Fedora Atomic 26 Operating System
   command: |
@@ -46,16 +55,23 @@
       --architectures x86_64
       --media "Fedora Atomic 26 Mirror"
       --provisioning-templates 'Kickstart default PXELinux,Fedora Atomic 26 Kickstart'
+  register: result
+  failed_when: result.rc |int > 0 and 'already exists' not in result.stderr
+  changed_when: "'already exists' not in result.stderr"
 
 - name: Associate templates with OS
   command: |
     hammer template add-operatingsystem
-      --name {{ item }}
-      --operatingsystem 'Fedora-Atomic'
+      --name "{{ item }}"
+      --operatingsystem 'Fedora Atomic 26'
   with_items:
     - 'Fedora Atomic 26 Kickstart'
     - 'Kickstart default PXELinux'
+  register: result
+  failed_when: result.rc |int > 0 and 'already been taken' not in result.stderr
+  changed_when: "'already been taken' not in result.stderr"
 
+      # --domain "home.fabianism.local"
 - name: Create the openshift-nodes hostgroup
   command: |
     hammer hostgroup create
@@ -64,10 +80,12 @@
       --operatingsystem "Fedora Atomic 26"
       --environment "production"
       --subnet "default"
-      --domain "home.fabianism.us"
       --architecture "x86_64"
       --partition-table "Kickstart default"
       --root-pass '{{ default_password }}'
+  register: result
+  failed_when: result.rc |int > 0 and 'already been taken' not in result.stderr
+  changed_when: "'already been taken' not in result.stderr"
 
 - name: Create default discovery provision rules
   command: |
@@ -77,13 +95,19 @@
       --hostname "node<%=@host.facts['ipaddress'].split('.')[-1] %>"
       --name "default"
       --search "*"
-      
+  register: result
+  failed_when: result.rc |int > 0 and 'already been taken' not in result.stderr
+  changed_when: "'already been taken' not in result.stderr"
+
 - name: Update settings
   command: |
     hammer settings set
-      --name "{{ item.0 }}"
-      --value "{{ item.1 }}"
-    with_items:
-      - ['global_PXELinux', 'Discovery PXELinux Template']
-      - ['ansible_ssh_pass', '{{ default_password }}']
-      - ['discovery_auto', 'true']
+      --name "{{ item.key }}"
+      --value "{{ item.value }}"
+  with_items:
+    - key: 'global_PXELinux'
+      value: 'Discovery PXELinux Template'
+    - key: 'ansible_ssh_pass'
+      value: '{{ default_password }}'
+    - key: 'discovery_auto'
+      value: 'true'
