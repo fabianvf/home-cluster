@@ -13,6 +13,7 @@
     foreman-installer
       --enable-foreman-plugin-ansible
       --enable-foreman-plugin-discovery
+      --foreman-admin-password={{ foreman_admin_password }}
 
 - name: Download foreman discovery images
   command: foreman-installer --foreman-plugin-discovery-install-images=true

@@ -82,7 +82,7 @@
       --subnet "default"
       --architecture "x86_64"
       --partition-table "Kickstart default"
-      --root-pass '{{ default_password }}'
+      --root-pass '{{ foreman_provisioning_password }}'
   register: result
   failed_when: result.rc |int > 0 and 'already been taken' not in result.stderr
   changed_when: "'already been taken' not in result.stderr"
@@ -108,6 +108,6 @@
     - key: 'global_PXELinux'
       value: 'Discovery PXELinux Template'
     - key: 'ansible_ssh_pass'
-      value: '{{ default_password }}'
+      value: '{{ foreman_provisioning_password }}'
     - key: 'discovery_auto'
       value: 'true'
