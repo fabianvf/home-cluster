@@ -63,7 +63,7 @@
   command: |
     hammer template add-operatingsystem
       --name "{{ item }}"
-      --operatingsystem 'Fedora Atomic 26'
+      --operatingsystem 'Fedora-Atomic 26'
   with_items:
     - 'Fedora Atomic 26 Kickstart'
     - 'Kickstart default PXELinux'
@@ -71,15 +71,13 @@
   failed_when: result.rc |int > 0 and 'already been taken' not in result.stderr
   changed_when: "'already been taken' not in result.stderr"
 
-      # --domain "home.fabianism.local"
 - name: Create the openshift-nodes hostgroup
   command: |
     hammer hostgroup create
       --architecture "x86_64"
       --name "openshift-nodes"
-      --operatingsystem "Fedora Atomic 26"
+      --operatingsystem "Fedora-Atomic 26"
       --environment "production"
-      --subnet "default"
       --architecture "x86_64"
       --partition-table "Kickstart default"
       --root-pass '{{ foreman_provisioning_password }}'
