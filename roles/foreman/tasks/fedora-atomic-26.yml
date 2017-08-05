@@ -97,6 +97,9 @@
   failed_when: result.rc |int > 0 and 'already been taken' not in result.stderr
   changed_when: "'already been taken' not in result.stderr"
 
+- name: Rebuild pxe default
+  command: hammer template build-pxe-default
+
 - name: Update settings
   command: |
     hammer settings set
