@@ -15,8 +15,16 @@
     foreman-installer
       --enable-foreman-plugin-ansible
       --enable-foreman-plugin-discovery
+      --enable-foreman-plugin-setup
       --foreman-admin-password={{ foreman_admin_password }}
+      --foreman-proxy-foreman-base-url=https://{{ inventory_hostname }}
+      --foreman-proxy-dns=true
       --foreman-proxy-dns-zone=home.fabianism.us
+      --foreman-proxy-dns-interface=enp0s25
+      --foreman-proxy-dns-reverse=1.168.192.in-addr.arpa
+      --foreman-proxy-dns-forwarders=192.168.1.253
+      --foreman-proxy-tftp=true
+      --foreman-proxy-tftp-servername=192.168.1.45
 
 - name: Download foreman discovery images
   command: foreman-installer --foreman-plugin-discovery-install-images=true
