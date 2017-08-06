@@ -1,12 +1,12 @@
 [foreman]
-foreman.home.fabianism.us
+foreman.fabianism.us
 
 [foreman:vars]
 foreman_installer_additional_options=""
 ansible_ssh_user=root
 
 [dns]
-foreman.home.fabianism.us
+foreman.fabianism.us
 
 [masters]
 
@@ -14,6 +14,11 @@ foreman.home.fabianism.us
 openshift_node_labels="{'region': 'infra', 'zone': 'default'}"
 
 [nodes]
+
+[nodes:children]
+foreman_hostgroup_openshift_nodes
+
+[foreman_hostgroup_openshift_nodes]
 
 [OSEv3:children]
 masters

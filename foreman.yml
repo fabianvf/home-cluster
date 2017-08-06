@@ -23,7 +23,7 @@
           = If the installation is cancelled here for whatever reason, you can continue the
           = install manually by running:.
           =
-          =      ansible-playbook -i hosts -i dynamic_inventory/foreman.py nodes.yml
+          =      ansible-playbook -i inventory nodes.yml
           =
           ======================================================================================
     - name: Refresh inventory from foreman

@@ -12,6 +12,15 @@
         - repo: https://github.com/openshift/openshift-ansible.git
           dir: openshift-ansible
 
+- name: If no masters exist, use the first node
+  hosts: localhost
+  connection: local
+  tasks:
+    - add_host:
+        hostname: "{{ groups['nodes'][0] }}"
+        groups: masters
+      when: groups['masters'] | length == 0
+
 - include: openshift-ansible/playbooks/byo/config.yml
   when: install_openshift|default(True)
 
