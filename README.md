@@ -35,6 +35,7 @@ My wife is a photographer, and generates between 1TB and 3TB of media per year. 
   - [ ] [Ambar](https://ambar.cloud/)
   - [ ] [Emby](https://emby.media/)
   - [ ] [Plex](https://www.plex.tv/)
+  - [ ] [Home Assistant](https://home-assistant.io/)
   
   
 ## Contributions welcome!
