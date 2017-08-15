@@ -4,9 +4,11 @@ foreman.fabianism.us
 [foreman:vars]
 foreman_installer_additional_options=""
 ansible_ssh_user=root
+foreman_subdomain=home.fabianism.us
+foreman_admin_password=admin
 
-[dns]
-foreman.fabianism.us
+[dns:children]
+foreman
 
 [masters]
 

@@ -55,7 +55,7 @@
       --architectures x86_64
       --media "Fedora Atomic 26 Mirror"
       --provisioning-templates 'Kickstart default PXELinux,Fedora Atomic 26 Kickstart'
-      --config-templates 'Kickstart default PXELinux,Fedora Atomic 26 Kickstart'
+      --templates 'Kickstart default PXELinux,Fedora Atomic 26 Kickstart'
   register: result
   failed_when: result.rc |int > 0 and 'already exists' not in result.stderr
   changed_when: "'already exists' not in result.stderr"
@@ -98,9 +98,6 @@
   failed_when: result.rc |int > 0 and 'already been taken' not in result.stderr
   changed_when: "'already been taken' not in result.stderr"
 
-- name: Rebuild pxe default
-  command: hammer template build-pxe-default
-
 - name: Update settings
   command: |
     hammer settings set
@@ -113,3 +110,6 @@
       value: '{{ foreman_provisioning_password }}'
     - key: 'discovery_auto'
       value: 'true'
+
+- name: Rebuild pxe default
+  command: hammer template build-pxe-default

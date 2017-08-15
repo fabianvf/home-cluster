@@ -1,5 +1,9 @@
 ---
 
+- name: Disable selinux
+  selinux:
+    state: disabled
+
 - name: install packages
   package:
     name: '{{ item }}'
@@ -10,21 +14,42 @@
     - foreman-installer
     - tfm-rubygem-hammer_cli_foreman_discovery
 
+- name: print foreman command
+  debug:
+    msg: |
+      foreman-installer
+        --foreman-admin-password={{ foreman_admin_password }}
+        --enable-foreman-plugin-ansible
+        --enable-foreman-plugin-discovery
+        --enable-foreman-proxy
+        --foreman-proxy-tftp=true
+        --foreman-proxy-tftp-servername={{ ansible_default_ipv4['address'] }}
+        --foreman-proxy-dns=true
+        --foreman-proxy-dns-interface={{ ansible_default_ipv4['interface'] }}
+        --foreman-proxy-dns-zone={{ foreman_subdomain }}
+        --foreman-proxy-dns-reverse=1.168.192.in-addr.arpa
+        --foreman-proxy-dns-forwarders={{ ansible_dns['nameservers'][0] }}
+        --foreman-proxy-foreman-base-url=https://foreman.{{ foreman_subdomain }}
+        --foreman-proxy-oauth-consumer-key N5h7s5WidswbqEVDwNfxaqh55owfcE62
+        --foreman-proxy-oauth-consumer-secret btCrdngjsfeA3VGpXTEFGT6pr5yXeYq9
+
 - name: Run foreman installer
   command: |
     foreman-installer
+      --foreman-admin-password={{ foreman_admin_password }}
       --enable-foreman-plugin-ansible
       --enable-foreman-plugin-discovery
-      --enable-foreman-plugin-setup
-      --foreman-admin-password={{ foreman_admin_password }}
-      --foreman-proxy-foreman-base-url=https://{{ inventory_hostname }}
-      --foreman-proxy-dns=true
-      --foreman-proxy-dns-zone=home.fabianism.us
-      --foreman-proxy-dns-interface=enp0s25
-      --foreman-proxy-dns-reverse=1.168.192.in-addr.arpa
-      --foreman-proxy-dns-forwarders=192.168.1.253
+      --enable-foreman-proxy
       --foreman-proxy-tftp=true
-      --foreman-proxy-tftp-servername=192.168.1.45
+      --foreman-proxy-tftp-servername={{ ansible_default_ipv4['address'] }}
+      --foreman-proxy-dns=true
+      --foreman-proxy-dns-interface={{ ansible_default_ipv4['interface'] }}
+      --foreman-proxy-dns-zone={{ foreman_subdomain }}
+      --foreman-proxy-dns-reverse=1.168.192.in-addr.arpa
+      --foreman-proxy-dns-forwarders={{ ansible_dns['nameservers'][0] }}
+      --foreman-proxy-foreman-base-url=https://foreman.{{ foreman_subdomain }}
+      --foreman-proxy-oauth-consumer-key N5h7s5WidswbqEVDwNfxaqh55owfcE62
+      --foreman-proxy-oauth-consumer-secret btCrdngjsfeA3VGpXTEFGT6pr5yXeYq9
 
 - name: Download foreman discovery images
   command: foreman-installer --foreman-plugin-discovery-install-images=true
@@ -37,6 +62,7 @@
     immediate: true
   with_items:
     - 53/tcp
+    - 53/udp
     - 67-69/udp
     - 80/tcp
     - 443/tcp
@@ -46,5 +72,11 @@
     - 5432/tcp
     - 8140/tcp
     - 8443/tcp
+
+- name: Enable foreman service
+  service:
+    name: foreman
+    enabled: yes
+    state: started
 
 - include: fedora-atomic-26.yml

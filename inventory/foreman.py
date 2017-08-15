@@ -367,12 +367,15 @@ class ForemanInventory(object):
         print(data_to_print)
 
     def run(self):
-        # Read settings and parse CLI arguments
-        if not self.read_settings():
-            return False
-        self.parse_cli_args()
-        self.get_inventory()
-        self._print_data()
+        try:
+            # Read settings and parse CLI arguments
+            if not self.read_settings():
+                return False
+            self.parse_cli_args()
+            self.get_inventory()
+            self._print_data()
+        except Exception as e:
+            print('{}')
         return True
 
 if __name__ == '__main__':
