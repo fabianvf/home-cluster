@@ -10,13 +10,20 @@
   with_items:
     - centos-release-scl
     - epel-release
-    - "https://yum.theforeman.org/releases/1.15/el7/x86_64/foreman-release.rpm"
+    - "https://yum.theforeman.org/releases/latest/el7/x86_64/foreman-release.rpm"
     - foreman-installer
     - tfm-rubygem-hammer_cli_foreman_discovery
 
-- name: print foreman command
-  debug:
-    msg: |
+- name: start and enable foreman service
+  service:
+    name: foreman
+    state: started
+    enabled: yes
+  ignore_errors: yes
+
+- name: set foreman-installer command
+  set_fact:
+    foreman_install_cmd: |
       foreman-installer
         --foreman-admin-password={{ foreman_admin_password }}
         --enable-foreman-plugin-ansible
@@ -30,28 +37,15 @@
         --foreman-proxy-dns-reverse=1.168.192.in-addr.arpa
         --foreman-proxy-dns-forwarders={{ ansible_dns['nameservers'][0] }}
         --foreman-proxy-foreman-base-url=https://foreman.{{ foreman_subdomain }}
-        --foreman-proxy-oauth-consumer-key N5h7s5WidswbqEVDwNfxaqh55owfcE62
-        --foreman-proxy-oauth-consumer-secret btCrdngjsfeA3VGpXTEFGT6pr5yXeYq9
+
+- name: print foreman command
+  debug:
+    msg: "{{ foreman_install_cmd }}"
 
 - name: Run foreman installer
-  command: |
-    foreman-installer
-      --foreman-admin-password={{ foreman_admin_password }}
-      --enable-foreman-plugin-ansible
-      --enable-foreman-plugin-discovery
-      --enable-foreman-proxy
-      --foreman-proxy-tftp=true
-      --foreman-proxy-tftp-servername={{ ansible_default_ipv4['address'] }}
-      --foreman-proxy-dns=true
-      --foreman-proxy-dns-interface={{ ansible_default_ipv4['interface'] }}
-      --foreman-proxy-dns-zone={{ foreman_subdomain }}
-      --foreman-proxy-dns-reverse=1.168.192.in-addr.arpa
-      --foreman-proxy-dns-forwarders={{ ansible_dns['nameservers'][0] }}
-      --foreman-proxy-foreman-base-url=https://foreman.{{ foreman_subdomain }}
-      --foreman-proxy-oauth-consumer-key N5h7s5WidswbqEVDwNfxaqh55owfcE62
-      --foreman-proxy-oauth-consumer-secret btCrdngjsfeA3VGpXTEFGT6pr5yXeYq9
+  command: "{{ foreman_install_cmd }}"
 
-- name: Download foreman discovery images
+- name: Install discovery images
   command: foreman-installer --foreman-plugin-discovery-install-images=true
 
 - name: open ports

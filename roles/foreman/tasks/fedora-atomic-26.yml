@@ -1,5 +1,23 @@
 ---
 
+- name: rsync Fedora Atomic 26 content for pxe boot
+  command: |
+    /usr/bin/rsync
+      --delay-updates -F
+      --compress
+      --archive
+      --include '/atomic'
+      --include '/atomic/stable'
+      --include '/atomic/stable/Fedora-Atomic-26-20170723.0'
+      --include '/atomic/stable/Fedora-Atomic-26-20170723.0/Atomic'
+      --include '/atomic/stable/Fedora-Atomic-26-20170723.0/Atomic/x86_64'
+      --include '/atomic/stable/Fedora-Atomic-26-20170723.0/Atomic/x86_64/os'
+      --include '/atomic/stable/Fedora-Atomic-26-20170723.0/Atomic/x86_64/os/**'
+      --exclude '*'
+      --out-format='<<CHANGED>>%i %n%L'
+      rsync://dl.fedoraproject.org/fedora-alt /var/lib/foreman/public/fedora-atomic-26
+
+
 - name: make template dir
   file:
     path: /tmp/templates/
@@ -13,41 +31,42 @@
   with_fileglob:
     - '*'
 
-- name: Create Fedora Atomic 26 installation medium
-  command: |
-    hammer medium create
+- include: create_or_update.yml
+  vars:
+    name: Fedora Atomic 26 Mirror
+    resource: medium
+    options: |
       --name "Fedora Atomic 26 Mirror"
       --os-family "Redhat"
-      --path "https://dl.fedoraproject.org/pub/alt/atomic/stable/Fedora-Atomic-26-20170723.0/Atomic/x86_64/os/"
-  register: result
-  failed_when: result.rc |int > 0 and 'already been taken' not in result.stderr
-  changed_when: "'already been taken' not in result.stderr"
+      --path "http://{{ inventory_hostname }}/fedora-atomic-26/atomic/stable/Fedora-Atomic-26-20170723.0/Atomic/x86_64/os/"
 
-- name: Create discovery PXELinux template
-  command: |
-    hammer template create
+
+- include: create_or_update.yml
+  vars:
+    name: Discovery PXELinux Template
+    resource: template
+    options: |
       --name "Discovery PXELinux Template"
       --type "PXELinux"
       --locked "no"
       --file /tmp/templates/template_DiscoveryPXEBoot
-  register: result
-  failed_when: result.rc |int > 0 and 'already been taken' not in result.stderr
-  changed_when: "'already been taken' not in result.stderr"
 
-- name: Create Fedora Atomic 26 Kickstart template
-  command: |
-    hammer template create
+- include: create_or_update.yml
+  vars:
+    name: Fedora Atomic 26 Kickstart
+    resource: template
+    options: |
       --name "Fedora Atomic 26 Kickstart"
       --type "provision"
       --locked "no"
       --file /tmp/templates/template_FedoraAtomicKickstart
-  register: result
-  failed_when: result.rc |int > 0 and 'already been taken' not in result.stderr
-  changed_when: "'already been taken' not in result.stderr"
 
-- name: Create Fedora Atomic 26 Operating System
-  command: |
-    hammer os create
+
+- include: create_or_update.yml
+  vars:
+    name: Fedora-Atomic
+    resource: os
+    options: |
       --family "Redhat"
       --name "Fedora-Atomic"
       --major "26"
@@ -55,10 +74,7 @@
       --architectures x86_64
       --media "Fedora Atomic 26 Mirror"
       --provisioning-templates 'Kickstart default PXELinux,Fedora Atomic 26 Kickstart'
-      --templates 'Kickstart default PXELinux,Fedora Atomic 26 Kickstart'
-  register: result
-  failed_when: result.rc |int > 0 and 'already exists' not in result.stderr
-  changed_when: "'already exists' not in result.stderr"
+      --config-templates 'Kickstart default PXELinux,Fedora Atomic 26 Kickstart'
 
 - name: Associate templates with OS
   command: |
@@ -72,31 +88,61 @@
   failed_when: result.rc |int > 0 and 'already been taken' not in result.stderr
   changed_when: "'already been taken' not in result.stderr"
 
-- name: Create the openshift-nodes hostgroup
-  command: |
-    hammer hostgroup create
-      --architecture "x86_64"
-      --name "openshift-nodes"
-      --operatingsystem "Fedora-Atomic 26"
-      --environment "production"
-      --architecture "x86_64"
-      --partition-table "Kickstart default"
-      --root-pass '{{ foreman_provisioning_password }}'
-  register: result
-  failed_when: result.rc |int > 0 and 'already been taken' not in result.stderr
-  changed_when: "'already been taken' not in result.stderr"
+- include: create_or_update.yml
+  vars:
+    name: home.fabianism.us
+    resource: domain
+    options: |
+      --dns-id 1
+      --name home.fabianism.us
 
-- name: Create default discovery provision rules
-  command: |
-    hammer discovery-rule create
+- include: create_or_update.yml
+  name: production
+  vars:
+    resource: environment
+    options: "--name production"
+
+- include: create_or_update.yml
+  vars:
+    name: default
+    resource: subnet
+    options: |
+      --name default
+      --network 192.168.1.0
+      --mask 255.255.255.0
+      --dns-id 1
+      --dns-primary 192.168.1.45
+      --domain-ids 1
+      --tftp-id 1
+
+- include: create_or_update.yml
+  vars:
+    name: openshift-nodes
+    resource: hostgroup
+    options: |
+        --architecture "x86_64"
+        --name "openshift-nodes"
+        --operatingsystem "Fedora-Atomic 26"
+        --environment "production"
+        --partition-table "Kickstart default"
+        --root-pass '{{ foreman_provisioning_password }}'
+        --domain-id 1
+        --subnet "default"
+        --puppet-ca-proxy-id 1
+        --puppet-proxy-id 1
+        --medium "Fedora Atomic 26 Mirror"
+        --pxe-loader '{{ pxe_loader | default("PXELinux BIOS")}}'
+
+- include: create_or_update.yml
+  vars:
+    name: default
+    resource: discovery-rule
+    options: |
       --enabled yes
       --hostgroup "openshift-nodes"
       --hostname "node<%=@host.facts['ipaddress'].split('.')[-1] %>"
       --name "default"
       --search "*"
-  register: result
-  failed_when: result.rc |int > 0 and 'already been taken' not in result.stderr
-  changed_when: "'already been taken' not in result.stderr"
 
 - name: Update settings
   command: |
@@ -110,6 +156,9 @@
       value: '{{ foreman_provisioning_password }}'
     - key: 'discovery_auto'
       value: 'true'
+    - key: 'safemode_render'
+      value: 'false'
 
+# TODO need to get OS to associate properly
 - name: Rebuild pxe default
   command: hammer template build-pxe-default

@@ -1,5 +1,5 @@
 [foreman]
-foreman.fabianism.us
+foreman.home.fabianism.us
 
 [foreman:vars]
 foreman_installer_additional_options=""
