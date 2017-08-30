@@ -1,44 +1,33 @@
 ---
 
-- name: rsync Fedora Atomic 26 content for pxe boot
-  command: |
-    /usr/bin/rsync
-      --delay-updates -F
-      --compress
-      --archive
-      --include '/atomic'
-      --include '/atomic/stable'
-      --include '/atomic/stable/Fedora-Atomic-26-20170723.0'
-      --include '/atomic/stable/Fedora-Atomic-26-20170723.0/Atomic'
-      --include '/atomic/stable/Fedora-Atomic-26-20170723.0/Atomic/x86_64'
-      --include '/atomic/stable/Fedora-Atomic-26-20170723.0/Atomic/x86_64/os'
-      --include '/atomic/stable/Fedora-Atomic-26-20170723.0/Atomic/x86_64/os/**'
-      --exclude '*'
-      --out-format='<<CHANGED>>%i %n%L'
-      rsync://dl.fedoraproject.org/fedora-alt /var/lib/foreman/public/fedora-atomic-26
-
-
 - name: make template dir
   file:
     path: /tmp/templates/
     state: directory
     mode: 0777
 
-- name: Copy templates
+- name: Copy files
   copy:
     src: "{{ item }}"
     dest: "/tmp/templates/{{ item.split('/')[-1] }}"
   with_fileglob:
-    - '*'
+    - 'files/*'
+
+- name: Copy templates
+  template:
+    src: "{{ item }}"
+    dest: "/tmp/templates/{{ item.split('/')[-1] }}"
+  with_fileglob:
+    - 'templates/*'
 
 - include: create_or_update.yml
   vars:
-    name: Fedora Atomic 26 Mirror
+    name: Fedora Atomic {{ fedora_version }} Mirror
     resource: medium
     options: |
-      --name "Fedora Atomic 26 Mirror"
+      --name "Fedora Atomic {{ fedora_version }} Mirror"
       --os-family "Redhat"
-      --path "http://{{ inventory_hostname }}/fedora-atomic-26/atomic/stable/Fedora-Atomic-26-20170723.0/Atomic/x86_64/os/"
+      --path "http://{{ inventory_hostname }}/fedora-atomic-{{ fedora_version }}/atomic/stable/{{ fedora_full_version_string }}/Atomic/x86_64/os/"
 
 
 - include: create_or_update.yml
@@ -53,10 +42,10 @@
 
 - include: create_or_update.yml
   vars:
-    name: Fedora Atomic 26 Kickstart
+    name: Fedora Atomic {{ fedora_version }} Kickstart
     resource: template
     options: |
-      --name "Fedora Atomic 26 Kickstart"
+      --name "Fedora Atomic {{ fedora_version }} Kickstart"
       --type "provision"
       --locked "no"
       --file /tmp/templates/template_FedoraAtomicKickstart
@@ -64,25 +53,25 @@
 
 - include: create_or_update.yml
   vars:
-    name: Fedora-Atomic
+    name: "Fedora-Atomic"
     resource: os
     options: |
       --family "Redhat"
       --name "Fedora-Atomic"
-      --major "26"
+      --major "{{ fedora_version }}"
       --partition-tables 'Kickstart default'
       --architectures x86_64
-      --media "Fedora Atomic 26 Mirror"
-      --provisioning-templates 'Kickstart default PXELinux,Fedora Atomic 26 Kickstart'
-      --config-templates 'Kickstart default PXELinux,Fedora Atomic 26 Kickstart'
+      --media "Fedora Atomic {{ fedora_version }} Mirror"
+      --provisioning-templates 'Kickstart default PXELinux,Fedora Atomic {{ fedora_version }} Kickstart'
+      --config-templates 'Kickstart default PXELinux,Fedora Atomic {{ fedora_version }} Kickstart'
 
 - name: Associate templates with OS
   command: |
     hammer template add-operatingsystem
       --name "{{ item }}"
-      --operatingsystem 'Fedora-Atomic 26'
+      --operatingsystem 'Fedora-Atomic {{ fedora_version }}'
   with_items:
-    - 'Fedora Atomic 26 Kickstart'
+    - 'Fedora Atomic {{ fedora_version }} Kickstart'
     - 'Kickstart default PXELinux'
   register: result
   failed_when: result.rc |int > 0 and 'already been taken' not in result.stderr
@@ -122,7 +111,7 @@
     options: |
         --architecture "x86_64"
         --name "openshift-nodes"
-        --operatingsystem "Fedora-Atomic 26"
+        --operatingsystem "Fedora-Atomic {{ fedora_version }}"
         --environment "production"
         --partition-table "Kickstart default"
         --root-pass '{{ foreman_provisioning_password }}'
@@ -130,7 +119,7 @@
         --subnet "default"
         --puppet-ca-proxy-id 1
         --puppet-proxy-id 1
-        --medium "Fedora Atomic 26 Mirror"
+        --medium "Fedora Atomic {{ fedora_version }} Mirror"
         --pxe-loader '{{ pxe_loader | default("PXELinux BIOS")}}'
 
 - include: create_or_update.yml

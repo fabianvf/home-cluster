@@ -7,3 +7,4 @@
 - name: "{{ name|default('') }} {{ resource }} was already present, update instead"
   command: hammer {{ resource }} update {{ options }}
   when: "'already been taken' in result.stderr"
+  ignore_errors: true
