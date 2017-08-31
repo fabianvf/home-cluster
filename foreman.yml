@@ -1,49 +1,30 @@
 ---
 
-- name: clone projects
+- name: install foreman
   hosts: foreman
-  tasks:
-  - name: clone projects
-    git:
-      repo: https://github.com/theforeman/forklift.git
-      dest: '{{ playbook_dir + "/" + 'forklift' }}'
-
-- include: forklift/playbooks/katello.yml
-
-- name: post-config
-  hosts: foreman
-  tasks:
-    - name: open ports
-      firewalld:
-        port: '{{ item }}'
-        state: enabled
-        permanent: true
-        immediate: true
-      with_items:
-        - 53/tcp
-        - 67-69/udp
-        - 80/tcp
-        - 443/tcp
-        - 3000/tcp
-        - 3306/tcp
-        - 5910-5930/tcp
-        - 5432/tcp
-        - 8140/tcp
-        - 8443/tcp
-
-    - name: pull down foreman discovery images
-      command: foreman-installer --foreman-plugin-discovery-install-images=true
-
-    - name: Reboot
-      shell: shutdown -r +1
-      async: 0
-      poll: 0
-
-    - name: "Wait for reboot"
-      local_action: wait_for
-      args:
-        host: "{{ inventory_hostname }}"
-        port: 22
-        state: started
-        delay: 60
-        timeout: 3600
+  roles:
+    - foreman
+    - reboot
+  post_tasks:
+    - name: Time to boot some hosts!
+      pause:
+        prompt: |
+          ======================================================================================
+          = Foreman has been configured with tftp and is available at {{ inventory_hostname }}
+          =
+          = Please ensure your router has been configured to route tftp request to Foreman
+          =
+          = If your network has been properly configured, and your hosts are set to pxeboot,
+          = all you need to do now is boot the hosts and wait for them to come up.
+          =
+          = Once your hosts are done provisioning, you can acknowledge this prompt to continue
+          = with the installation.
+          =
+          = If the installation is cancelled here for whatever reason, you can continue the
+          = install manually by running:.
+          =
+          =      ansible-playbook -i inventory nodes.yml
+          =
+          ======================================================================================
+    - name: Refresh inventory from foreman
+      meta: refresh_inventory

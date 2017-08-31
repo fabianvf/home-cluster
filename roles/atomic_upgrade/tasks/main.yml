@@ -1,0 +1,18 @@
+- name: get docker version
+  shell: docker --version | awk '{print $3}' | cut -d ',' -f 1
+  register: version
+
+- name: Docker version
+  debug: msg={{ version.stdout }}
+
+- set_fact:
+    upgrade: '{{ not (version.stdout.split(".")[0]|int >= 1 and version.stdout.split(".")[1]|int >= 12) }}'
+
+- name: Upgrading atomic host
+  debug: msg={{ upgrade }}
+  when: upgrade
+
+- name: atomic host upgrade
+  atomic_host:
+    revision: latest
+  when: upgrade

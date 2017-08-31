@@ -1,0 +1,153 @@
+---
+
+- name: make template dir
+  file:
+    path: /tmp/templates/
+    state: directory
+    mode: 0777
+
+- name: Copy files
+  copy:
+    src: "{{ item }}"
+    dest: "/tmp/templates/{{ item.split('/')[-1] }}"
+  with_fileglob:
+    - 'files/*'
+
+- name: Copy templates
+  template:
+    src: "{{ item }}"
+    dest: "/tmp/templates/{{ item.split('/')[-1] }}"
+  with_fileglob:
+    - 'templates/*'
+
+- include: create_or_update.yml
+  vars:
+    name: Fedora Atomic {{ fedora_version }} Mirror
+    resource: medium
+    options: |
+      --name "Fedora Atomic {{ fedora_version }} Mirror"
+      --os-family "Redhat"
+      --path "http://{{ inventory_hostname }}/fedora-atomic-{{ fedora_version }}/atomic/stable/{{ fedora_full_version_string }}/Atomic/x86_64/os/"
+
+
+- include: create_or_update.yml
+  vars:
+    name: Discovery PXELinux Template
+    resource: template
+    options: |
+      --name "Discovery PXELinux Template"
+      --type "PXELinux"
+      --locked "no"
+      --file /tmp/templates/template_DiscoveryPXEBoot
+
+- include: create_or_update.yml
+  vars:
+    name: Fedora Atomic {{ fedora_version }} Kickstart
+    resource: template
+    options: |
+      --name "Fedora Atomic {{ fedora_version }} Kickstart"
+      --type "provision"
+      --locked "no"
+      --file /tmp/templates/template_FedoraAtomicKickstart
+
+
+- include: create_or_update.yml
+  vars:
+    name: "Fedora-Atomic"
+    resource: os
+    options: |
+      --family "Redhat"
+      --name "Fedora-Atomic"
+      --major "{{ fedora_version }}"
+      --partition-tables 'Kickstart default'
+      --architectures x86_64
+      --media "Fedora Atomic {{ fedora_version }} Mirror"
+      --provisioning-templates 'Kickstart default PXELinux,Fedora Atomic {{ fedora_version }} Kickstart'
+      --config-templates 'Kickstart default PXELinux,Fedora Atomic {{ fedora_version }} Kickstart'
+
+- name: Associate templates with OS
+  command: |
+    hammer template add-operatingsystem
+      --name "{{ item }}"
+      --operatingsystem 'Fedora-Atomic {{ fedora_version }}'
+  with_items:
+    - 'Fedora Atomic {{ fedora_version }} Kickstart'
+    - 'Kickstart default PXELinux'
+  register: result
+  failed_when: result.rc |int > 0 and 'already been taken' not in result.stderr
+  changed_when: "'already been taken' not in result.stderr"
+
+- include: create_or_update.yml
+  vars:
+    name: home.fabianism.us
+    resource: domain
+    options: |
+      --dns-id 1
+      --name home.fabianism.us
+
+- include: create_or_update.yml
+  name: production
+  vars:
+    resource: environment
+    options: "--name production"
+
+- include: create_or_update.yml
+  vars:
+    name: default
+    resource: subnet
+    options: |
+      --name default
+      --network 192.168.1.0
+      --mask 255.255.255.0
+      --dns-id 1
+      --dns-primary 192.168.1.45
+      --domain-ids 1
+      --tftp-id 1
+
+- include: create_or_update.yml
+  vars:
+    name: openshift-nodes
+    resource: hostgroup
+    options: |
+        --architecture "x86_64"
+        --name "openshift-nodes"
+        --operatingsystem "Fedora-Atomic {{ fedora_version }}"
+        --environment "production"
+        --partition-table "Kickstart default"
+        --root-pass '{{ foreman_provisioning_password }}'
+        --domain-id 1
+        --subnet "default"
+        --puppet-ca-proxy-id 1
+        --puppet-proxy-id 1
+        --medium "Fedora Atomic {{ fedora_version }} Mirror"
+        --pxe-loader '{{ pxe_loader | default("PXELinux BIOS")}}'
+
+- include: create_or_update.yml
+  vars:
+    name: default
+    resource: discovery-rule
+    options: |
+      --enabled yes
+      --hostgroup "openshift-nodes"
+      --hostname "node<%=@host.facts['ipaddress'].split('.')[-1] %>"
+      --name "default"
+      --search "*"
+
+- name: Update settings
+  command: |
+    hammer settings set
+      --name "{{ item.key }}"
+      --value "{{ item.value }}"
+  with_items:
+    - key: 'global_PXELinux'
+      value: 'Discovery PXELinux Template'
+    - key: 'ansible_ssh_pass'
+      value: '{{ foreman_provisioning_password }}'
+    - key: 'discovery_auto'
+      value: 'true'
+    - key: 'safemode_render'
+      value: 'false'
+
+# TODO need to get OS to associate properly
+- name: Rebuild pxe default
+  command: hammer template build-pxe-default

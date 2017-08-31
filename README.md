@@ -13,16 +13,19 @@ My wife is a photographer, and generates between 1TB and 3TB of media per year. 
   - More drives is better
   - More RAM is better
   
-## Networking
-- Static IP for Foreman
-- Will need to configure your router to forward tftp traffic to Foreman
-- Will need a wildcard domain pointing to your openshift cluster (for routes to work)
-  - I think it might be possible to configure Foreman with DNS to handle this. If so, just need your router to use foreman for DNS
+### Networking
+- Foreman needs a static IP + hostname
+- Your router needs to use Foreman for DNS (at least for a subdomain on your network)
+- Your router needs to use Foreman for TFTP
+
+### Software
+- ansible >= 2.3
+- TODO: audit dependencies
 
 ## What will this do?
-- [ ] Foreman deploy (including TFTP)
+- [x] Foreman deploy (including TFTP)
+- [x] Sync fedora atomic images to Foreman
 - [ ] VPN deployment
-- [x] Creation of CentOS Atomic PXE boot images
 - [x] Deployment of Openshift Origin
 - [ ] Deployment of glusterfs daemonset (or ceph if possible)
   - [ ] Configuration of ceph|gluster for dynamic persistent volume provisioning 

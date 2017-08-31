@@ -1,0 +1,15 @@
+---
+
+- name: Reboot
+  shell: shutdown -r +1
+  async: 0
+  poll: 0
+
+- name: "Wait for reboot"
+  local_action: wait_for
+  args:
+    host: "{{ inventory_hostname }}"
+    port: 22
+    state: started
+    delay: 60
+    timeout: 3600

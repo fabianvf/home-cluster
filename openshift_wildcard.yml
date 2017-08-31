@@ -1,0 +1,8 @@
+---
+
+- name: Setup DNS with openshift wildcard domain
+  hosts: dns
+  tasks:
+    - name: TODO set up dns wildcard
+      debug:
+        msg: "TODO Set up dns wildcard for openshift"

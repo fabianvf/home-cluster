@@ -1,0 +1,37 @@
+---
+
+- name: ensure required sub-projects exist
+  hosts: localhost
+  tasks:
+    - name: clone projects
+      when: clone_projects | default(True)
+      git:
+        repo: '{{ item.repo }}'
+        dest: '{{ playbook_dir + "/" + item.dir }}'
+      with_items:
+        - repo: https://github.com/openshift/openshift-ansible.git
+          dir: openshift-ansible
+
+- name: If no masters exist, use the first node
+  hosts: localhost
+  connection: local
+  tasks:
+    - add_host:
+        hostname: "{{ groups['nodes'][0] }}"
+        groups: masters
+      when: groups['masters'] | length == 0
+
+- include: openshift-ansible/playbooks/byo/config.yml
+  when: install_openshift|default(True)
+
+- hosts: oo_first_master
+  gather_facts: false
+  tasks:
+    - name: Grant cluster-admin permissions to admin user
+      command: oc adm policy add-cluster-role-to-user cluster-admin admin
+
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: oc login
+      command: oc login -u admin -p admin

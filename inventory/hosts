@@ -1,22 +1,26 @@
-# openshift configuration
 [foreman]
-node5.local
+foreman.home.fabianism.us
 
 [foreman:vars]
-foreman_installer_options="--force --enable-foreman-plugin-ansible --enable-foreman-plugin-discovery --enable-foreman-plugin-templates"
-foreman_repositories_version=1.15
-katello_repositories_version=3.4
-# foreman-installer --foreman-plugin-discovery-install-images=true
+foreman_installer_additional_options=""
+ansible_ssh_user=root
+foreman_subdomain=home.fabianism.us
+foreman_admin_password=admin
 
+[dns:children]
+foreman
 
 [masters]
-node1.local openshift_node_labels="{'region': 'infra', 'zone': 'default'}"
+
+[masters:vars]
+openshift_node_labels="{'region': 'infra', 'zone': 'default'}"
 
 [nodes]
-node1.local
-node2.local
-node3.local
-node4.local
+
+[nodes:children]
+foreman_hostgroup_openshift_nodes
+
+[foreman_hostgroup_openshift_nodes]
 
 [OSEv3:children]
 masters
@@ -29,7 +33,7 @@ ansible_become=true
 deployment_type=origin
 openshift_image_tag=v1.5.0
 openshift_deployment_type=origin
-openshift_master_default_subdomain="apps.fabianism.local"
+openshift_master_default_subdomain="apps.home.fabianism.us"
 openshift_master_identity_providers="[{'name': 'htpasswd_auth','login': 'true', 'challenge': 'true','kind': 'AllowAllPasswordIdentityProvider'}]"
 openshift_node_labels="{'region': 'primary', 'zone': 'default'}"
 openshift_schedulable=true

@@ -1,0 +1,32 @@
+# install git + rpm-ostree + ostree
+# git clone https://pagure.io/fedora-atomic.git
+# get fedora package gpg key somehow
+# ostree --repo=/var/lib/foreman/public/atomic init --mode=archive-z2
+# rpm-ostree compose tree --repo=/var/lib/foreman/public/atomic $clonedir/fedora-atomic-host.json
+
+- shell: curl https://download.fedoraproject.org/pub/alt/atomic/stable -L | grep "Fedora-Atomic" | tail -n1 |  sed -rn 's|.*<a href="(.*)/">.*|\1|p'
+  register: latest_fedora_response
+
+- shell: echo {{ latest_fedora_response.stdout }} | awk -F "-" '{print $3}'
+  register: fedora_number_raw
+
+- set_fact:
+    fedora_version: '{{ fedora_number_raw.stdout }}'
+    fedora_full_version_string: '{{ latest_fedora_response.stdout }}'
+
+- name: rsync Fedora Atomic {{ fedora_version }} content for pxe boot
+  command: |
+    /usr/bin/rsync
+      --delay-updates -F
+      --compress
+      --archive
+      --include '/atomic'
+      --include '/atomic/stable'
+      --include '/atomic/stable/{{ fedora_full_version_string }}'
+      --include '/atomic/stable/{{ fedora_full_version_string }}/Atomic'
+      --include '/atomic/stable/{{ fedora_full_version_string }}/Atomic/x86_64'
+      --include '/atomic/stable/{{ fedora_full_version_string }}/Atomic/x86_64/os'
+      --include '/atomic/stable/{{ fedora_full_version_string }}/Atomic/x86_64/os/**'
+      --exclude '*'
+      --out-format='<<CHANGED>>%i %n%L'
+      rsync://dl.fedoraproject.org/fedora-alt /var/lib/foreman/public/fedora-atomic-{{ fedora_version }}

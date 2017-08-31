@@ -1,0 +1,61 @@
+<%#
+kind: provision
+name: Fedora Atomic {{ fedora_version }} Kickstart default
+%>
+
+lang <%= @host.params['lang'] || 'en_US.UTF-8' %>
+keyboard <%= @host.params['keyboard'] || 'us' %>
+timezone --utc <%= @host.params['time-zone'] || 'UTC' %>
+
+<% subnet = @host.subnet -%>
+<% if subnet.respond_to?(:dhcp_boot_mode?) -%>
+<% dhcp = subnet.dhcp_boot_mode? && !@static -%>
+<% else -%>
+<% dhcp = !@static -%>
+<% end -%>
+
+network --bootproto <%= dhcp ? 'dhcp' : "static --ip=#{@host.ip} --netmask=#{subnet.mask} --gateway=#{subnet.gateway} --nameserver=#{[subnet.dns_primary, subnet.dns_secondary].select(&:present?).join(',')}" %> --hostname <%= @host %><%= " --device=#{@host.mac}" -%>
+
+# Partition clearing information
+clearpart --all --initlabel --drives=sda
+# Disk partitioning information
+part /boot --fstype="xfs" --ondisk=sda --size=4096
+
+part pv.297 --fstype="lvmpv" --ondisk=sda --size=0 --grow 
+volgroup cah pv.297 --pesize=4096 
+logvol swap  --fstype="swap" --size=4096 --name=swap --vgname=cah
+logvol /  --fstype="xfs" --size=30720 --name=root --vgname=cah
+
+bootloader --timeout=3
+text
+
+ostreesetup --nogpg --osname="fedora-atomic" --remote="fedora-atomic-{{ fedora_version }}" --url="http://{{ inventory_hostname }}/fedora-atomic-{{ fedora_version }}/repo" --ref="fedora/{{ fedora_version }}/x86_64/atomic-host"
+
+services --disabled cloud-init,cloud-config,cloud-final,cloud-init-local
+rootpw --iscrypted <%= root_pass %>
+
+reboot
+
+
+ %post
+#---- Install our SSH key ----
+mkdir -m0700 /root/.ssh/
+
+cat <<EOF >/root/.ssh/authorized_keys
+{{ authorized_keys }}
+EOF
+
+### set permissions
+chmod 0600 /root/.ssh/authorized_keys
+
+### fix up selinux context
+restorecon -R /root/.ssh/
+%end
+
+# Report success back to Foreman
+curl -s -o /dev/null --insecure <%= foreman_url('built') %>
+) 2>&1 | tee /mnt/sysimage/root/install.post.log
+
+exit 0
+
+%end
