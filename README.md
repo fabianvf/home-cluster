@@ -23,11 +23,10 @@ My wife is a photographer, and generates between 1TB and 3TB of media per year. 
 - TODO: audit dependencies
 
 ## What will this do?
-- [x] Foreman deploy (including TFTP)
-- [x] Sync fedora atomic images to Foreman
-- [ ] VPN deployment
+- [x] Foreman deploy (including TFTP and DNS)
+- [x] Sync Fedora Atomic images to Foreman
 - [x] Deployment of Openshift Origin
-- [ ] Deployment of glusterfs daemonset (or ceph if possible)
+- [ ] Deployment of Glusterfs daemonset (or ceph if possible)
   - [ ] Configuration of ceph|gluster for dynamic persistent volume provisioning 
 - [ ] Deployment and configuration of various services (feel free to add PRs to expand this list, it's a wishlist)
   - [ ] [Seafile](https://www.seafile.com/en/home/)
