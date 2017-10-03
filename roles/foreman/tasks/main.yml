@@ -10,6 +10,7 @@
   with_items:
     - centos-release-scl
     - epel-release
+    - "https://yum.puppetlabs.com/puppetlabs-release-pc1-el-7.noarch.rpm"
     - "https://yum.theforeman.org/releases/1.16/el7/x86_64/foreman-release.rpm"
     - foreman-installer
     - tfm-rubygem-hammer_cli_foreman_discovery
