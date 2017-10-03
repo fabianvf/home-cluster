@@ -10,7 +10,7 @@
   with_items:
     - centos-release-scl
     - epel-release
-    - "https://yum.theforeman.org/releases/latest/el7/x86_64/foreman-release.rpm"
+    - "https://yum.theforeman.org/releases/1.16/el7/x86_64/foreman-release.rpm"
     - foreman-installer
     - tfm-rubygem-hammer_cli_foreman_discovery
 
