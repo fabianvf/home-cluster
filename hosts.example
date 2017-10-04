@@ -1,6 +1,5 @@
 # You will need to fill in a hostname for your foreman host
 [foreman]
-foreman.example.org
 
 [dns:children]
 foreman

@@ -1,0 +1,12 @@
+ansible_become: true
+ansible_ssh_user: root
+
+os_update: true
+
+openshift_master_default_subdomain: "apps.{{ foreman_subdomain }}"
+openshift_deployment_type: origin
+openshift_disable_check: memory_availability
+openshift_image_tag: v1.5.0
+openshift_master_identity_providers: "[{'name': 'htpasswd_auth','login': 'true', 'challenge': 'true','kind': 'AllowAllPasswordIdentityProvider'}]"
+openshift_schedulable: true
+openshift_set_hostname: true

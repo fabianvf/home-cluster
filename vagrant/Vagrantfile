@@ -1,0 +1,42 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "centos/7"
+  config.ssh.insert_key = false
+  config.hostmanager.enabled = true
+  config.hostmanager.manage_host = true
+  config.hostmanager.ignore_private_ip = false
+  config.hostmanager.include_offline = true
+
+  config.vm.synced_folder "..", "/vagrant",
+    nfs: true,
+    nfs_version: 4,
+    nfs_udp: false
+
+  config.vm.provision :shell, :path => "centos_7_x.sh"
+
+  if Vagrant.has_plugin?("vagrant-cachier")
+    config.cache.scope = :box
+    config.cache.synced_folder_opts = {
+      type: :nfs,
+      mount_options: ['rw', 'vers=4', 'tcp', 'nolock']
+    }
+  end
+
+  config.vm.hostname = 'foreman.example.org'
+  config.vm.network :private_network,
+    :libvirt__network_name => "home-cluster-devel",
+    :libvirt__dhcp_enabled => true,
+    :libvirt__netmask => "255.255.255.0",
+    :mac => "52:11:22:33:44:41",
+    :ip => '192.168.17.11'
+  # config.hostmanager.aliases = %w(foreman.example.org)
+
+
+  config.vm.provider :libvirt do |libvirt|
+    libvirt.driver = "kvm"
+    libvirt.memory = 4000
+    libvirt.cpus = `grep -c ^processor /proc/cpuinfo`.to_i
+  end
+end

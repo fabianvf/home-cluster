@@ -4,6 +4,12 @@
   selinux:
     state: disabled
 
+- name: Enable firewalld service
+  service:
+    name: firewalld
+    enabled: yes
+    state: started
+
 - name: install packages
   package:
     name: '{{ item }}'
@@ -43,6 +49,7 @@
   debug:
     msg: "{{ foreman_install_cmd }}"
 
+# TODO: write this to a file on success and compare, to prevent rerunning if not needed
 - name: Run foreman installer
   command: "{{ foreman_install_cmd }}"
 
