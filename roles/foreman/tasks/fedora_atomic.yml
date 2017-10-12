@@ -125,7 +125,7 @@
 - include: create_or_update.yml
   vars:
     name: default
-    resource: discovery_rule
+    resource: discovery-rule
     options: |
       --enabled yes
       --hostgroup "openshift-nodes"

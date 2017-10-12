@@ -23,3 +23,4 @@ if  ! grep -q "^PermitRootLogin yes" /etc/ssh/sshd_config ; then
   sed -i -e '/^PermitRootLogin/s/^.*$/PermitRootLogin yes/' /etc/ssh/sshd_config
 fi
 /sbin/service sshd restart
+ifup eth1

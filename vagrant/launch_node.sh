@@ -14,18 +14,19 @@ if [ "$?" != 0 ]; then
   echo "Please update and continue."
   exit 1
 fi
+mkdir -p .libvirt/images
 
 virt-install \
   --name ${NAME} \
   --vcpus=${CPUS} \
   --ram=${MEMORY} \
-  --os-type=Linux \
-  --os-variant=centos7 \
-  --disk pool=/var/lib/libvirt/images/${NAME}.img,bus=virtio,format=qcow2,size=${DISK_SIZE} \
+  --os-type=linux \
+  --disk path=/home/libvirt/images/${NAME}.img,bus=virtio,sparse=true,format=raw,cache=unsafe,size=${DISK_SIZE} \
   --pxe \
-  --accelerate
+  --accelerate \
   --graphics vnc \
   --noautoconsole \
   --hvm \
-  --network network=${NETWORK} \
+  --network bridge:virbr2 \
   --boot network,hd
+  # --os-variant=centos \ --network network=${NETWORK}\

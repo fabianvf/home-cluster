@@ -17,7 +17,7 @@
     - centos-release-scl
     - epel-release
     - "https://yum.puppetlabs.com/puppetlabs-release-pc1-el-7.noarch.rpm"
-    - "https://yum.theforeman.org/releases/1.16/el7/x86_64/foreman-release.rpm"
+    - "https://yum.theforeman.org/releases/1.15/el7/x86_64/foreman-release.rpm"
     - foreman-installer
     - tfm-rubygem-hammer_cli_foreman_discovery
 
@@ -37,9 +37,9 @@
         --enable-foreman-plugin-discovery
         --enable-foreman-proxy
         --foreman-proxy-tftp=true
-        --foreman-proxy-tftp-servername={{ ansible_default_ipv4['address'] }}
+        --foreman-proxy-tftp-servername={{ tftp_server|default(ansible_default_ipv4['address']) }}
         --foreman-proxy-dns=true
-        --foreman-proxy-dns-interface={{ ansible_default_ipv4['interface'] }}
+        --foreman-proxy-dns-interface={{ dns_interface|default(ansible_default_ipv4['interface']) }}
         --foreman-proxy-dns-zone={{ foreman_subdomain }}
         --foreman-proxy-dns-reverse=1.168.192.in-addr.arpa
         --foreman-proxy-foreman-base-url=https://foreman.{{ foreman_subdomain }}
