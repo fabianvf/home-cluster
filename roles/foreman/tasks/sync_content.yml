@@ -16,6 +16,22 @@
     gpgcheck: no
     state: present
 
+- set_fact:
+    gpg_key_url: "https://getfedora.org/static/{{ fedora_gpg_keyfile[fedora_version] }}"
+    gpg_key_file: /etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-{{ fedora_version }}-x86_64
+
+
+- name: Download the fedora {{ fedora_version }} GPG key
+  uri:
+    url: '{{ gpg_key_url }}'
+    dest: '{{ gpg_key_file }}'
+    creates: '{{ gpg_key_file }}'
+
+- name: Install the fedora {{ fedora_version }} GPG key
+  rpm_key:
+    key: '{{ gpg_key_file }}'
+    state: present
+
 - name: Install required packages for composing an ostree
   yum:
     name: '{{ item }}'
