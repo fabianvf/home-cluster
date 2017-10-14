@@ -6,6 +6,11 @@ if [[ "$?" -ne 0 ]]; then
  exit 1
 fi
 
+sudo virsh net-destroy home-cluster-devel
+sudo virsh net-undefine home-cluster-devel
+sudo virsh net-define network.xml
+sudo virsh net-start home-cluster-devel
+
 set -e
 vagrant destroy
 vagrant up --provision
