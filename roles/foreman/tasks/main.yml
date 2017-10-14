@@ -37,11 +37,11 @@
         --enable-foreman-plugin-discovery
         --enable-foreman-proxy
         --foreman-proxy-tftp=true
-        --foreman-proxy-tftp-servername={{ tftp_server|default(ansible_default_ipv4['address']) }}
+        --foreman-proxy-tftp-servername={{ foreman_ip }}
         --foreman-proxy-dns=true
-        --foreman-proxy-dns-interface={{ dns_interface|default(ansible_default_ipv4['interface']) }}
+        --foreman-proxy-dns-interface={{ foreman_dns_interface }}
         --foreman-proxy-dns-zone={{ foreman_subdomain }}
-        --foreman-proxy-dns-reverse=1.168.192.in-addr.arpa
+        --foreman-proxy-dns-reverse={{ foreman_proxy_dns_reverse }}
         --foreman-proxy-foreman-base-url=https://foreman.{{ foreman_subdomain }}
         --foreman-proxy-bmc
 
