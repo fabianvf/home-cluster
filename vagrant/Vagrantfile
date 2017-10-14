@@ -13,6 +13,7 @@ Vagrant.configure("2") do |config|
   #   nfs: true,
   #   nfs_version: 4,
   #   nfs_udp: false
+  config.vm.synced_folder ".vagrant/content", "/var/lib/foreman/public/"
 
   config.vm.provision :shell, :path => "centos_7_x.sh"
 

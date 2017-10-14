@@ -6,6 +6,8 @@ if [[ "$?" -ne 0 ]]; then
  exit 1
 fi
 
+mkdir -p .vagrant/content
+
 sudo virsh net-destroy home-cluster-devel
 sudo virsh net-undefine home-cluster-devel
 sudo virsh net-define network.xml
@@ -18,3 +20,7 @@ vagrant up --provision
 sed '/\[foreman\]/a foreman.example.org' ../hosts.example > ../inventory/hosts
 
 (cd .. ; ansible-playbook -i inventory playbooks/foreman.yml -e "foreman_dns_interface=eth1")
+
+if [[ ! -z "$(vagrant plugin list | grep rsync-back)" ]]; then
+  vagrant rsync-back
+fi
