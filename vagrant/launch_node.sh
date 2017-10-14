@@ -27,6 +27,6 @@ virt-install \
   --graphics vnc \
   --noautoconsole \
   --hvm \
-  --network bridge:virbr2 \
+  --network bridge:virbr117 \
   --boot network,hd
   # --os-variant=centos \ --network network=${NETWORK}\
