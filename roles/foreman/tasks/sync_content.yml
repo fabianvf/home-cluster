@@ -29,6 +29,7 @@
   git:
     repo: 'https://pagure.io/fedora-atomic.git'
     dest: /tmp/fedora-atomic
+    version: f{{ fedora_version }}
 
 - name: Init ostree repo
   command: ostree --repo=/var/lib/foreman/public/atomic init --mode=archive-z2
