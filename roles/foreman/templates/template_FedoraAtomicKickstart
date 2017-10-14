@@ -37,7 +37,7 @@ rootpw --iscrypted <%= root_pass %>
 reboot
 
 
- %post
+%post
 #---- Install our SSH key ----
 mkdir -m0700 /root/.ssh/
 
@@ -50,7 +50,6 @@ chmod 0600 /root/.ssh/authorized_keys
 
 ### fix up selinux context
 restorecon -R /root/.ssh/
-%end
 
 # Report success back to Foreman
 curl -s -o /dev/null --insecure <%= foreman_url('built') %>
