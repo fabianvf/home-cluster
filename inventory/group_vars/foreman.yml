@@ -4,3 +4,12 @@ ansible_ssh_pass: changeme
 foreman_subdomain: example.org
 foreman_admin_password: admin
 
+foreman_provisioning_password: changeme
+foreman_admin_password: changeme
+authorized_keys: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+
+foreman_dns_interface: "{{ ansible_default_ipv4.interface}}"
+foreman_network_facts: "{{ vars['ansible_' + foreman_dns_interface] }}"
+foreman_ip: "{{ foreman_network_facts.ipv4.address }}"
+foreman_subnet: "{{ foreman_network_facts.ipv4.network }}"
+foreman_proxy_dns_reverse: "{{ (foreman_subnet | ipaddr('revdns'))[2:-1] }}"
