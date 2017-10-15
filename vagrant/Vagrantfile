@@ -9,10 +9,7 @@ Vagrant.configure("2") do |config|
   config.hostmanager.ignore_private_ip = false
   config.hostmanager.include_offline = true
 
-  # config.vm.synced_folder "..", "/vagrant",
-  #   nfs: true,
-  #   nfs_version: 4,
-  #   nfs_udp: false
+  config.vm.synced_folder '.', '/vagrant', disabled: true
   config.vm.synced_folder ".vagrant/content", "/var/lib/foreman/public/"
 
   config.vm.provision :shell, :path => "centos_7_x.sh"
