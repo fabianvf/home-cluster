@@ -2,19 +2,21 @@
 
 - name: ensure required sub-projects exist
   hosts: localhost
+  connection: local
   tasks:
     - name: clone projects
-      when: clone_projects | default(True)
       git:
         repo: 'https://github.com/openshift/openshift-ansible.git'
         dest: /tmp/openshift-ansible
+      when: clone_projects | default(True)
 
 - name: If no masters exist, fail out
   hosts: localhost
   connection: local
   tasks:
-      fail: "No master registered to foreman"
+    - fail: msg="No master registered to foreman"
       when: groups['masters'] | length == 0
+
 
 - include: /tmp/openshift-ansible/playbooks/byo/config.yml
   when: install_openshift|default(True)

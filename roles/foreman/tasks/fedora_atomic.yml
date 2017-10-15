@@ -162,7 +162,7 @@
     options: |
       --enabled yes
       --hostgroup "openshift-nodes"
-      --hostname "node<%=@host.facts['ipaddress'].split('.')[-1] %>"
+      --hostname "node<%=@host.id%>"
       --name "openshift-nodes"
       --search "*"
       --priority 1
