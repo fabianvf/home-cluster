@@ -151,7 +151,7 @@
         --subnet "default"
         --puppet-ca-proxy-id 1
         --puppet-proxy-id 1
-        --parent id 1
+        --parent-id 1
         --medium "Fedora Atomic {{ fedora_version }} Mirror"
         --pxe-loader '{{ pxe_loader | default("PXELinux BIOS")}}'
 
