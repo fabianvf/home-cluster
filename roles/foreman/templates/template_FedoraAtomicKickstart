@@ -32,13 +32,8 @@ ROOTDRIVE=""
 for DEV in sda hda vda sdb hdb vdb sdc vdc sdd; do
   if [ -d $DIR/$DEV ]; then
     echo $DEV
-    SIZE=`cat $DIR/$DEV/size`
-    GB=$(($SIZE/2**21))
-    if [ $GB -gt $MINSIZE ]; then
-      echo "$(($SIZE/2**21))"
-      if [ -z $ROOTDRIVE ]; then
-        ROOTDRIVE=$DEV
-      fi
+    if [ -z $ROOTDRIVE ]; then
+      ROOTDRIVE=$DEV
     fi
   fi
 done

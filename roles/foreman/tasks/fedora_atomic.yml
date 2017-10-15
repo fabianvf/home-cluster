@@ -163,7 +163,7 @@
     - key: 'safemode_render'
       value: 'false'
     - key: 'query_local_nameservers'
-      value: 'false'
+      value: 'true'
 
 
 - name: Rebuild pxe default
