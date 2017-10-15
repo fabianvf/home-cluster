@@ -83,3 +83,21 @@
 
 - include: sync_content.yml
 - include: fedora_atomic.yml
+
+- name: Read in the auth information for named
+  command: awk -F '"' 'NF > 0 {print $2}' /etc/rndc.key
+  register: result
+
+- set_fact:
+    key_name: '{{ result.stdout_lines[0] }}'
+    key_secret: '{{ result.stdout_lines[-1] }}'
+
+- name: Add the wildcard redirect for openshift master
+  nsupdate:
+    key_name: '{{ key_name }}'
+    key_secret: '{{ key_secret }}'
+    server: localhost
+    type: CNAME
+    record: '*.apps.{{ foreman_subdomain }}.'
+    zone: '{{ foreman_subdomain }}.'
+    value: 'master'

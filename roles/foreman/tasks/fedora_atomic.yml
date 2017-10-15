@@ -139,14 +139,46 @@
 
 - include: create_or_update.yml
   vars:
-    name: default
+    name: openshift-master
+    resource: hostgroup
+    options: |
+        --name "openshift-master"
+        --operatingsystem "Fedora-Atomic {{ fedora_version }}"
+        --environment "production"
+        --partition-table "Kickstart default"
+        --root-pass '{{ foreman_provisioning_password }}'
+        --domain-id 1
+        --subnet "default"
+        --puppet-ca-proxy-id 1
+        --puppet-proxy-id 1
+        --parent id 1
+        --medium "Fedora Atomic {{ fedora_version }} Mirror"
+        --pxe-loader '{{ pxe_loader | default("PXELinux BIOS")}}'
+
+- include: create_or_update.yml
+  vars:
+    name: openshift-nodes
     resource: discovery-rule
     options: |
       --enabled yes
       --hostgroup "openshift-nodes"
       --hostname "node<%=@host.facts['ipaddress'].split('.')[-1] %>"
-      --name "default"
+      --name "openshift-nodes"
       --search "*"
+      --priority 1
+
+- include: create_or_update.yml
+  vars:
+    name: openshift-master
+    resource: discovery-rule
+    options: |
+      --enabled yes
+      --hostgroup "openshift-master"
+      --hostname "master"
+      --name "openshift-master"
+      --search "*"
+      --priority 0
+      --max-count 1
 
 - name: Update settings
   command: |
