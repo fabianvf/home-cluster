@@ -1,5 +1,5 @@
 - name: wait for hosts to come up, upgrade if out of date
-  hosts: nodes
+  hosts: OSEv3
   gather_facts: false
   pre_tasks:
   - name: "Wait for host up"
@@ -11,6 +11,9 @@
       delay: 10
       timeout: 3600
   - setup:
+  - set_fact:
+      upgrade: true
   roles:
     - atomic_upgrade
-    - reboot
+    - role: reboot
+      when: upgrade

@@ -20,6 +20,7 @@
     - "https://yum.theforeman.org/releases/1.15/el7/x86_64/foreman-release.rpm"
     - foreman-installer
     - tfm-rubygem-hammer_cli_foreman_discovery
+    - python-dns
 
 - name: start and enable foreman service
   service:

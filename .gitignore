@@ -1,3 +1,4 @@
 inventory/hosts
 *.retry
 vagrant/.vagrant
+openshift-ansible/
