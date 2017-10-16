@@ -2,3 +2,4 @@ inventory/hosts
 *.retry
 vagrant/.vagrant
 my_vars.yml
+openshift-ansible/
