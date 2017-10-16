@@ -42,10 +42,10 @@
 
 - include: create_or_update.yml
   vars:
-    name: Fedora Atomic {{ fedora_version }} Kickstart
+    name: Fedora-Atomic {{ fedora_version }} Kickstart
     resource: template
     options: |
-      --name "Fedora Atomic {{ fedora_version }} Kickstart"
+      --name "Fedora-Atomic {{ fedora_version }} Kickstart"
       --type "provision"
       --locked "no"
       --file /tmp/templates/template_FedoraAtomicKickstart
@@ -62,8 +62,8 @@
       --partition-tables 'Kickstart default'
       --architectures x86_64
       --media "Fedora Atomic {{ fedora_version }} Mirror"
-      --provisioning-templates 'Kickstart default PXELinux,Fedora Atomic {{ fedora_version }} Kickstart'
-      --config-templates 'Kickstart default PXELinux,Fedora Atomic {{ fedora_version }} Kickstart'
+      --provisioning-templates 'Kickstart default PXELinux,Fedora-Atomic {{ fedora_version }} Kickstart'
+      --config-templates 'Kickstart default PXELinux,Fedora-Atomic {{ fedora_version }} Kickstart'
 
 - name: Associate templates with OS
   command: |
@@ -71,19 +71,34 @@
       --name "{{ item }}"
       --operatingsystem 'Fedora-Atomic {{ fedora_version }}'
   with_items:
-    - 'Fedora Atomic {{ fedora_version }} Kickstart'
+    - 'Fedora-Atomic {{ fedora_version }} Kickstart'
     - 'Kickstart default PXELinux'
   register: result
   failed_when: result.rc |int > 0 and 'already been taken' not in result.stderr
   changed_when: "'already been taken' not in result.stderr"
 
+- name: Get OS ID
+  shell: hammer os list --search "Fedora-Atomic {{ fedora_version }}" | grep "Fedora-Atomic 26" | awk -F "|" '{print $1}'
+  register: fedora_atomic_os
+
+- name: Get template IDs
+  shell: hammer template list --search "{{ item }}" | grep "{{ item }}" | awk -F "|" '{print $1}'
+  with_items:
+    - 'Fedora-Atomic {{ fedora_version }} Kickstart'
+    - 'Kickstart default PXELinux'
+  register: template_ids
+
+- name: Set default templates for OS
+  command: hammer os set-default-template --id {{ fedora_atomic_os.stdout }} --config-template-id {{ item.stdout }}
+  with_items: '{{ template_ids.results }}'
+
 - include: create_or_update.yml
   vars:
-    name: home.fabianism.us
+    name: '{{ foreman_subdomain }}'
     resource: domain
     options: |
       --dns-id 1
-      --name home.fabianism.us
+      --name '{{ foreman_subdomain }}'
 
 - include: create_or_update.yml
   name: production
@@ -97,10 +112,10 @@
     resource: subnet
     options: |
       --name default
-      --network 192.168.1.0
+      --network {{ foreman_subnet }}
       --mask 255.255.255.0
       --dns-id 1
-      --dns-primary 192.168.1.45
+      --dns-primary {{ foreman_ip }}
       --domain-ids 1
       --tftp-id 1
 
@@ -124,14 +139,46 @@
 
 - include: create_or_update.yml
   vars:
-    name: default
+    name: openshift-master
+    resource: hostgroup
+    options: |
+        --name "openshift-master"
+        --operatingsystem "Fedora-Atomic {{ fedora_version }}"
+        --environment "production"
+        --partition-table "Kickstart default"
+        --root-pass '{{ foreman_provisioning_password }}'
+        --domain-id 1
+        --subnet "default"
+        --puppet-ca-proxy-id 1
+        --puppet-proxy-id 1
+        --parent-id 1
+        --medium "Fedora Atomic {{ fedora_version }} Mirror"
+        --pxe-loader '{{ pxe_loader | default("PXELinux BIOS")}}'
+
+- include: create_or_update.yml
+  vars:
+    name: openshift-nodes
     resource: discovery-rule
     options: |
       --enabled yes
       --hostgroup "openshift-nodes"
-      --hostname "node<%=@host.facts['ipaddress'].split('.')[-1] %>"
-      --name "default"
+      --hostname "node<%=@host.id%>"
+      --name "openshift-nodes"
       --search "*"
+      --priority 1
+
+- include: create_or_update.yml
+  vars:
+    name: openshift-master
+    resource: discovery-rule
+    options: |
+      --enabled yes
+      --hostgroup "openshift-master"
+      --hostname "master"
+      --name "openshift-master"
+      --search "*"
+      --priority 0
+      --max-count 1
 
 - name: Update settings
   command: |
@@ -147,7 +194,9 @@
       value: 'true'
     - key: 'safemode_render'
       value: 'false'
+    - key: 'query_local_nameservers'
+      value: 'true'
 
-# TODO need to get OS to associate properly
+
 - name: Rebuild pxe default
   command: hammer template build-pxe-default

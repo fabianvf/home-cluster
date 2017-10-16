@@ -1,0 +1,8 @@
+---
+
+# TODO: Can this be done programmatically?
+fedora_gpg_keyfile:
+  "25": FDB19C98.txt
+  "26": 64DAB85D.txt
+  "27": F5282EE4.txt
+  "28": 9DB62FB1.txt

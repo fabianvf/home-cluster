@@ -1,4 +1,8 @@
----
+foreman_installer_additional_options: ""
+ansible_ssh_user: root
+ansible_ssh_pass: changeme
+foreman_subdomain: example.org
+foreman_admin_password: admin
 
 foreman_provisioning_password: changeme
 foreman_admin_password: changeme

@@ -1,5 +1,13 @@
 ---
 
+- name: verify ansible runner meets requirements
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: Ensure python netaddr package is installed
+      command: python -c "import netaddr"
+
 - name: install foreman
   hosts: foreman
   roles:

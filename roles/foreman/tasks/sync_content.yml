@@ -1,9 +1,3 @@
-# install git + rpm-ostree + ostree
-# git clone https://pagure.io/fedora-atomic.git
-# get fedora package gpg key somehow
-# ostree --repo=/var/lib/foreman/public/atomic init --mode=archive-z2
-# rpm-ostree compose tree --repo=/var/lib/foreman/public/atomic $clonedir/fedora-atomic-host.json
-
 - shell: curl https://download.fedoraproject.org/pub/alt/atomic/stable -L | grep "Fedora-Atomic" | tail -n1 |  sed -rn 's|.*<a href="(.*)/">.*|\1|p'
   register: latest_fedora_response
 
@@ -13,6 +7,51 @@
 - set_fact:
     fedora_version: '{{ fedora_number_raw.stdout }}'
     fedora_full_version_string: '{{ latest_fedora_response.stdout }}'
+
+- name: Enable centos 7 atomic repo
+  yum_repository:
+    name: centos-atomic-host
+    description: Centos Atomic Packages
+    baseurl: "https://buildlogs.centos.org/centos/7/atomic/x86_64/Packages/"
+    gpgcheck: no
+    state: present
+
+- set_fact:
+    gpg_key_url: "https://getfedora.org/static/{{ fedora_gpg_keyfile[fedora_version] }}"
+    gpg_key_file: /etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-{{ fedora_version }}-x86_64
+
+
+- name: Download the fedora {{ fedora_version }} GPG key
+  uri:
+    url: '{{ gpg_key_url }}'
+    dest: '{{ gpg_key_file }}'
+    creates: '{{ gpg_key_file }}'
+
+- name: Install the fedora {{ fedora_version }} GPG key
+  rpm_key:
+    key: '{{ gpg_key_file }}'
+    state: present
+
+- name: Install required packages for composing an ostree
+  yum:
+    name: '{{ item }}'
+    state: present
+  with_items:
+    - git
+    - ostree
+    - rpm-ostree
+
+- name: Clone the fedora ostree project
+  git:
+    repo: 'https://pagure.io/fedora-atomic.git'
+    dest: /tmp/fedora-atomic
+    version: f{{ fedora_version }}
+
+- name: Init ostree repo
+  command: ostree --repo=/var/lib/foreman/public/atomic init --mode=archive-z2
+
+- name: Compose ostree
+  command: rpm-ostree compose tree --repo=/var/lib/foreman/public/atomic /tmp/fedora-atomic/fedora-atomic-host.json
 
 - name: rsync Fedora Atomic {{ fedora_version }} content for pxe boot
   command: |
@@ -30,3 +69,4 @@
       --exclude '*'
       --out-format='<<CHANGED>>%i %n%L'
       rsync://dl.fedoraproject.org/fedora-alt /var/lib/foreman/public/fedora-atomic-{{ fedora_version }}
+  ignore_errors: true
