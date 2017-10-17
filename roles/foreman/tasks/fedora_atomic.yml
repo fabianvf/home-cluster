@@ -22,10 +22,10 @@
 
 - include: create_or_update.yml
   vars:
-    name: Fedora Atomic {{ fedora_version }} Mirror
+    name: Fedora-Atomic {{ fedora_version }} Mirror
     resource: medium
     options: |
-      --name "Fedora Atomic {{ fedora_version }} Mirror"
+      --name "Fedora-Atomic {{ fedora_version }} Mirror"
       --os-family "Redhat"
       --path "http://{{ inventory_hostname }}/fedora-atomic-{{ fedora_version }}/atomic/stable/{{ fedora_full_version_string }}/Atomic/x86_64/os/"
 
@@ -61,7 +61,7 @@
       --major "{{ fedora_version }}"
       --partition-tables 'Kickstart default'
       --architectures x86_64
-      --media "Fedora Atomic {{ fedora_version }} Mirror"
+      --media "Fedora-Atomic {{ fedora_version }} Mirror"
       --provisioning-templates 'Kickstart default PXELinux,Fedora-Atomic {{ fedora_version }} Kickstart'
       --config-templates 'Kickstart default PXELinux,Fedora-Atomic {{ fedora_version }} Kickstart'
 
@@ -134,7 +134,7 @@
         --subnet "default"
         --puppet-ca-proxy-id 1
         --puppet-proxy-id 1
-        --medium "Fedora Atomic {{ fedora_version }} Mirror"
+        --medium "Fedora-Atomic {{ fedora_version }} Mirror"
         --pxe-loader '{{ pxe_loader | default("PXELinux BIOS")}}'
 
 - include: create_or_update.yml
@@ -152,7 +152,7 @@
         --puppet-ca-proxy-id 1
         --puppet-proxy-id 1
         --parent-id 1
-        --medium "Fedora Atomic {{ fedora_version }} Mirror"
+        --medium "Fedora-Atomic {{ fedora_version }} Mirror"
         --pxe-loader '{{ pxe_loader | default("PXELinux BIOS")}}'
 
 - include: create_or_update.yml
