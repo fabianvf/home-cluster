@@ -16,6 +16,7 @@
   with_items:
     - centos-release-scl
     - epel-release
+    - python-dns
     - "https://yum.puppetlabs.com/puppetlabs-release-pc1-el-7.noarch.rpm"
     - "https://yum.theforeman.org/releases/1.15/el7/x86_64/foreman-release.rpm"
     - foreman-installer
@@ -43,7 +44,7 @@
         --foreman-proxy-dns-interface={{ foreman_dns_interface }}
         --foreman-proxy-dns-zone={{ foreman_subdomain }}
         --foreman-proxy-dns-reverse={{ foreman_proxy_dns_reverse }}
-        --foreman-proxy-foreman-base-url=https://foreman.{{ foreman_subdomain }}
+        --foreman-proxy-foreman-base-url=https://{{ foreman_hostname }}.{{ foreman_subdomain }}
         --foreman-proxy-bmc
 
 - name: print foreman command

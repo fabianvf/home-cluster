@@ -16,7 +16,6 @@ timezone --utc <%= @host.params['time-zone'] || 'UTC' %>
 
 network --bootproto <%= dhcp ? 'dhcp' : "static --ip=#{@host.ip} --netmask=#{subnet.mask} --gateway=#{subnet.gateway} --nameserver=#{[subnet.dns_primary, subnet.dns_secondary].select(&:present?).join(',')}" %> --hostname <%= @host %><%= " --device=#{@host.mac}" -%>
 
-
 %include /tmp/part-include
 
 %pre
