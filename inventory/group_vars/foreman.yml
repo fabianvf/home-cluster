@@ -1,11 +1,13 @@
-foreman_installer_additional_options: ""
 ansible_ssh_user: root
 ansible_ssh_pass: changeme
-foreman_subdomain: example.org
-foreman_admin_password: admin
 
+foreman_installer_additional_options: ""
 foreman_provisioning_password: changeme
 foreman_admin_password: changeme
+foreman_hostname: foreman
+foreman_subdomain: example.org
+fedora_content_mirror: "dl.fedoraproject.org/fedora-alt"
+
 authorized_keys: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
 
 foreman_dns_interface: "{{ ansible_default_ipv4.interface}}"

@@ -1,7 +1,11 @@
 # You will need to fill in a hostname for your foreman host
 [foreman]
+# foreman.example.org
 
-# Leave these groups blank, they will be populated by the nodes that register with foreman
+################################################################################
+# Leave the following groups blank, they will be populated by the nodes that
+# register with foreman
+################################################################################
 [masters]
 
 [masters:children]
