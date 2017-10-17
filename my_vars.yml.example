@@ -1,0 +1,9 @@
+# Overrides
+
+#foreman_installer_additional_options: ""
+#foreman_provisioning_password: changeme
+#foreman_admin_password: changeme
+#foreman_hostname: foreman
+#foreman_subdomain: example.org
+#foreman_admin_password: admin
+#fedora_content_mirror: "dl.fedoraproject.org/fedora-alt"
