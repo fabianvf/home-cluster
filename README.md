@@ -6,13 +6,38 @@ This is a repository of playbooks/scripts to deploy, configure, and manage a pri
 ## Motivation
 My wife is a photographer, and generates between 1TB and 3TB of media per year. I am a software engineer working on Openshift, and have a variety of applications running on our local network, spread around a ton of hardware. I'm sick of manually configuring/fixing things, and was hoping to leverage some of my professional experience to provide a secure local network backup system for my wife, and a good platform for hosting/running applications for me.
 
+## Prerequisites
+
+### Ansible
+
+`cp hosts.example inventory/hosts`, edit as appropriate.
+
+`cp my_vars.yml.example my_vars.yml`, edit as appropriate for overrides.
+
+### Hardware
+- 1 server that will handle meta-cluster stuff (AKA, foreman + VPN). I'm currently looking at running this on an Intel NUC or something. Raspberry Pi might work, but I think there may be some issues with foreman + PXE + ARM
+- N servers that will serve as openshift nodes. I'm currently using 5 old office desktops that I got on ebay for $30 each, they have Core 2 Duos and 4GB DDR3 RAM.
+  - More drives is better
+  - More RAM is better
+
+### Networking
+- Foreman needs a static IP + hostname
+- Your router needs to use Foreman for DNS (at least for a subdomain on your network)
+- Your router needs to use Foreman for TFTP
+
+### Software
+- ansible >= 2.3
+- TODO: audit dependencies
+
 ## What will this do?
 - [x] Foreman deploy (including TFTP and DNS)
 - [x] Sync Fedora Atomic images to Foreman
 - [x] Provision nodes with Fedora Atomic
 - [x] Deployment of Openshift Origin
 - [ ] Deployment of Heketi and gluster
-  - [ ] Configuration of gluster for dynamic persistent volume provisioning 
+  - [ ] Configuration of gluster for dynamic persistent volume provisioning
+- [ ] Deployment of Glusterfs daemonset (or ceph if possible)
+  - [ ] Configuration of ceph|gluster for dynamic persistent volume provisioning
 - [ ] Deployment and configuration of various services (feel free to add PRs to expand this list, it's a wishlist)
   - [ ] [Seafile](https://www.seafile.com/en/home/)
   - [ ] [Collabora online](https://www.collaboraoffice.com/)
@@ -23,8 +48,8 @@ My wife is a photographer, and generates between 1TB and 3TB of media per year. 
   - [ ] [Emby](https://emby.media/)
   - [ ] [Plex](https://www.plex.tv/)
   - [ ] [Home Assistant](https://home-assistant.io/)
-  
-  
+
+
 ## Testing it out
 To test out this environment, I recommend using the vagrant environment defined in the `vagrant` directory.
 
@@ -54,7 +79,7 @@ For non-vagrant deployments, here are the requirements:
 - N servers that will serve as openshift nodes. I'm currently using 5 old office desktops that I got on ebay for $30 each, they have Core 2 Duos and 4GB DDR3 RAM.
   - More drives is better
   - More RAM is better
-  
+
 ### Networking
 - Foreman needs a static IP + hostname
 - Your router needs to use Foreman for DNS (at least for a subdomain on your network)
@@ -66,9 +91,8 @@ For non-vagrant deployments, here are the requirements:
 - python-requests
 - TODO: audit dependencies
 
-
 ## Contributions welcome!
 
-Feel free to hop into the IRC chat, submit issues/PRs, whatever! At first this will likely be very specific to my hardware setup, but I'll work on making it more generic, which should happen naturally over time as I mix and match my hardware more. 
-  
+Feel free to hop into the IRC chat, submit issues/PRs, whatever! At first this will likely be very specific to my hardware setup, but I'll work on making it more generic, which should happen naturally over time as I mix and match my hardware more.
+
 IRC discussion on [freenode #home-cluster](https://kiwiirc.com/client/irc.freenode.net/#home-cluster)
