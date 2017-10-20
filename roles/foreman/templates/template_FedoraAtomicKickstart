@@ -87,6 +87,7 @@ cat <<EOF >/etc/puppetlabs/puppet/puppet.conf
 <%= snippet 'puppet.conf' %>
 EOF
 
+docker pull docker.io/puppet/puppet-agent
 docker run -d \
   --restart always \
   --name puppet-agent \

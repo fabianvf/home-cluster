@@ -22,11 +22,13 @@ if [[ "$?" -ne 0 ]]; then
 fi
 
 
-if [[ -z "$(vagrant plugin list | grep 'vagrant-libvirt')" ]]; then
-  echo "${textred}You must install the vagrant-libvirt vagrant plugin"
-  tput sgr0
-  exit 1
-fi
+for plugin in 'vagrant-libvirt vagrant-hostmanager' ; do
+  if [[ -z "$(vagrant plugin list | grep ${plugin})" ]]; then
+    echo "${textred}You must install the ${plugin} vagrant plugin"
+    tput sgr0
+    exit 1
+  fi
+done
 
 # END: Dependencies
 

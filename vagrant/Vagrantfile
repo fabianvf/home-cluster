@@ -5,6 +5,12 @@ Vagrant.configure("2") do |config|
   config.vm.box = "centos/7"
   config.ssh.insert_key = false
 
+  config.hostmanager.enabled = true
+  config.hostmanager.manage_host = true
+  config.hostmanager.ignore_private_ip = false
+  config.hostmanager.include_offline = true
+  config.vm.hostname = 'foreman.example.org'
+
   config.vm.synced_folder '.', '/vagrant', disabled: true
   config.vm.synced_folder ".vagrant/content/fedora-atomic", "/var/lib/foreman/public/fedora-atomic", type: 'rsync'
   config.vm.synced_folder ".vagrant/content/atomic", "/var/lib/foreman/public/atomic", type: 'rsync'
