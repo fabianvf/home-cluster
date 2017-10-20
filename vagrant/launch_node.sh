@@ -23,7 +23,7 @@ virt-install \
   --vcpus=${CPUS} \
   --ram=${MEMORY} \
   --os-type=linux \
-  --disk path=${LIBVIRT_IMAGE_DIR}/${NAME}.img,bus=virtio,sparse=true,format=raw,cache=unsafe,size=${FIRST_DISK_SIZE} \
+  --disk path=${LIBVIRT_IMAGE_DIR}/${NAME}.img,bus=virtio,sparse=true,format=raw,cache=unsafe,size=${PRIMARY_DISK_SIZE} \
   --disk path=${LIBVIRT_IMAGE_DIR}/${NAME}2.img,bus=virtio,sparse=true,format=raw,cache=unsafe,size=${ADDITIONAL_DISKS_SIZE} \
   --pxe \
   --accelerate \
