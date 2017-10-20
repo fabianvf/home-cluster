@@ -6,7 +6,7 @@ if [[ "$?" -ne 0 ]]; then
  exit 1
 fi
 
-mkdir -p .vagrant/content
+mkdir -p .vagrant/content/{atomic,fedora-atomic}
 
 sudo virsh net-destroy home-cluster-devel
 sudo virsh net-undefine home-cluster-devel

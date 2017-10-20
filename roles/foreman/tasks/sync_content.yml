@@ -68,5 +68,5 @@
       --include '/atomic/stable/{{ fedora_full_version_string }}/Atomic/x86_64/os/**'
       --exclude '*'
       --out-format='<<CHANGED>>%i %n%L'
-      rsync://{{ fedora_content_mirror }} /var/lib/foreman/public/fedora-atomic-{{ fedora_version }}
+      rsync://{{ fedora_content_mirror }} /var/lib/foreman/public/fedora-atomic
   ignore_errors: true

@@ -27,7 +27,7 @@
     options: |
       --name "Fedora-Atomic {{ fedora_version }} Mirror"
       --os-family "Redhat"
-      --path "http://{{ inventory_hostname }}/fedora-atomic-{{ fedora_version }}/atomic/stable/{{ fedora_full_version_string }}/Atomic/x86_64/os/"
+      --path "http://{{ foreman_hostname }}.{{ foreman_subdomain }}/fedora-atomic/atomic/stable/{{ fedora_full_version_string }}/Atomic/x86_64/os/"
 
 
 - include: create_or_update.yml
@@ -78,7 +78,7 @@
   changed_when: "'already been taken' not in result.stderr"
 
 - name: Get OS ID
-  shell: hammer os list --search "Fedora-Atomic {{ fedora_version }}" | grep "Fedora-Atomic 26" | awk -F "|" '{print $1}'
+  shell: hammer os list --search "Fedora-Atomic {{ fedora_version }}" | grep "Fedora-Atomic {{ fedora_version }}" | awk -F "|" '{print $1}'
   register: fedora_atomic_os
 
 - name: Get template IDs
