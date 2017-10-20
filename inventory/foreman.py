@@ -375,6 +375,7 @@ class ForemanInventory(object):
             self.get_inventory()
             self._print_data()
         except Exception as e:
+            print(e, file=sys.stderr)
             print('{}')
         return True
 
