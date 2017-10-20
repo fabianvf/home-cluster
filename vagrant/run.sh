@@ -22,7 +22,7 @@ if [[ "$?" -ne 0 ]]; then
 fi
 
 
-for plugin in 'vagrant-libvirt vagrant-hostmanager' ; do
+for plugin in "vagrant-libvirt" "vagrant-hostmanager" ; do
   if [[ -z "$(vagrant plugin list | grep ${plugin})" ]]; then
     echo "${textred}You must install the ${plugin} vagrant plugin"
     tput sgr0
@@ -71,7 +71,7 @@ set -e
 vagrant destroy
 vagrant up --provision
 
-#END: VM configuration
+# END: VM configuration
 
 (cd .. ; ansible-playbook -i inventory playbooks/foreman.yml -e "foreman_dns_interface=eth1" -e "foreman_subdomain=example.org" -e "foreman_hostname=foreman")
 
