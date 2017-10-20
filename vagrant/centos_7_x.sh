@@ -10,8 +10,6 @@ echo "changeme" | passwd root --stdin
 
 # Enable root ssh key access
 cp -R /home/vagrant/.ssh /root/.ssh
-
-# Enable ovirt.org repository
 )
 
 # Enable password based SSH auth

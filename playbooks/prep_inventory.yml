@@ -29,7 +29,7 @@
     copy:
       content: |
           [foreman]
-          https://{{ foreman_hostname }}.{{ foreman_subdomain }}
+          {{ foreman_hostname }}.{{ foreman_subdomain }}
 
           [masters]
 
