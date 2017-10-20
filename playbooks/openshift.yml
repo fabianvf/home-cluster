@@ -1,14 +1,6 @@
 ---
 
-# - name: ensure required sub-projects exist
-  # hosts: localhost
-  # connection: local
-  # tasks:
-  #   - name: clone projects
-  #     git:
-  #       repo: 'https://github.com/openshift/openshift-ansible.git'
-  #       dest: /tmp/openshift-ansible
-  #     when: clone_projects | default(True)
+- include: prep_inventory.yml
 
 - name: If no masters exist, fail out
   hosts: localhost

@@ -17,9 +17,7 @@ set -e
 vagrant destroy
 vagrant up --provision
 
-sed '/\[foreman\]/a foreman.example.org' ../hosts.example > ../inventory/hosts
-
-(cd .. ; ansible-playbook -i inventory playbooks/foreman.yml -e "foreman_dns_interface=eth1")
+(cd .. ; ansible-playbook -i inventory playbooks/foreman.yml -e "foreman_dns_interface=eth1" -e "foreman_subdomain=example.org" -e "foreman_hostname=foreman")
 
 if [[ ! -z "$(vagrant plugin list | grep rsync-back)" ]]; then
   vagrant rsync-back

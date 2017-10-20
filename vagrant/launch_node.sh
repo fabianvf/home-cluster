@@ -1,7 +1,8 @@
 LIBVIRT_IMAGE_DIR=${LIBVIRT_IMAGE_DIR:-/var/lib/libvirt/images}
 DATE=`date +"%s"`
 NAME="node_${DATE}"
-DISK_SIZE="80"
+PRIMARY_DISK_SIZE="80"
+ADDITIONAL_DISKS_SIZE="30"
 NETWORK="home-cluster-devel"
 CPUS=4
 MEMORY="4096"
@@ -22,7 +23,8 @@ virt-install \
   --vcpus=${CPUS} \
   --ram=${MEMORY} \
   --os-type=linux \
-  --disk path=${LIBVIRT_IMAGE_DIR}/${NAME}.img,bus=virtio,sparse=true,format=raw,cache=unsafe,size=${DISK_SIZE} \
+  --disk path=${LIBVIRT_IMAGE_DIR}/${NAME}.img,bus=virtio,sparse=true,format=raw,cache=unsafe,size=${FIRST_DISK_SIZE} \
+  --disk path=${LIBVIRT_IMAGE_DIR}/${NAME}2.img,bus=virtio,sparse=true,format=raw,cache=unsafe,size=${ADDITIONAL_DISKS_SIZE} \
   --pxe \
   --accelerate \
   --graphics vnc \

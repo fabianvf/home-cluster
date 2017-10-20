@@ -1,0 +1,4 @@
+foreman_hostname: foreman
+foreman_subdomain: example.org
+foreman_provisioning_password: changeme
+foreman_admin_password: changeme

@@ -1,2 +1,3 @@
+- include: prep_inventory.yml
 - include: foreman.yml
 - include: nodes.yml

@@ -370,7 +370,8 @@ class ForemanInventory(object):
         try:
             # Read settings and parse CLI arguments
             if not self.read_settings():
-                return False
+                print('{}')
+                return True
             self.parse_cli_args()
             self.get_inventory()
             self._print_data()

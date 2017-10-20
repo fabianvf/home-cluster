@@ -82,6 +82,22 @@ chmod 0600 /root/.ssh/authorized_keys
 ### fix up selinux context
 restorecon -R /root/.ssh/
 
+mkdir -p /etc/puppetlabs/puppet
+cat <<EOF >/etc/puppetlabs/puppet/puppet.conf
+<%= snippet 'puppet.conf' %>
+EOF
+
+docker run -d \
+  --restart always \
+  --name puppet-agent \
+  --hostname <%= @host %> \
+  --net host  -v /tmp:/tmp -v /etc:/etc -v /var:/var -v /usr:/usr -v /lib64:/lib64 \
+  --privileged
+  puppet/puppet-agent agent \
+    --no-daemonize \
+    --certname <%= @host.certname %> \
+    --server <%= @host.puppetmaster %>
+
 # Report success back to Foreman
 curl -s -o /dev/null --insecure <%= foreman_url('built') %>
 ) 2>&1 | tee /mnt/sysimage/root/install.post.log

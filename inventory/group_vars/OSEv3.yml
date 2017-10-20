@@ -11,3 +11,6 @@ openshift_master_identity_providers: "[{'name': 'htpasswd_auth','login': 'true',
 openshift_schedulable: true
 openshift_set_hostname: true
 ansible_python_interpreter: /usr/bin/python3
+# glusterfs_devices: '{{ (ansible_devices.keys()|sort)[1:] }}'
+# openshift_hosted_registry_storage_kind: glusterfs
+# openshift_hosted_registry_storage_glusterfs_swap: True

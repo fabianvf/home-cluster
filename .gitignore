@@ -1,5 +1,10 @@
-inventory/hosts
 *.retry
 vagrant/.vagrant
 my_vars.yml
 openshift-ansible/
+foreman.cache
+foreman.facts
+foreman.index
+foreman.params
+inventory/home_cluster_hosts
+inventory/foreman.ini
