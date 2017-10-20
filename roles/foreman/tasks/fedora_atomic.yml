@@ -180,6 +180,22 @@
       --priority 0
       --max-count 1
 
+# global_PXELinux:
+#   We need to update the default pxelinux template that is
+#   used so that discovery is the default instead of local boot
+# discovery_auto:
+#   This will cause hosts to automatically provision themselves
+#   based on the discovery-rules present. This way we don't
+#   need to manually manage the hosts
+# safemode_render:
+#   This was breaking stuff, if anyone could explain it to me
+#   that would be great.
+# query_local_nameservers:
+#   DNS was broken, I don't really understand this one either
+# ignore_facts_for_operatingsystem
+#   /etc/fedora-release doesn't differentiate between normal
+#   and atomic fedora, so if we update the OS from puppet
+#   it will remove the fedora-atomic assignation from the host
 - name: Update settings
   command: |
     hammer settings set
@@ -195,6 +211,8 @@
     - key: 'safemode_render'
       value: 'false'
     - key: 'query_local_nameservers'
+      value: 'true'
+    - key: 'ignore_facts_for_operatingsystem'
       value: 'true'
 
 
