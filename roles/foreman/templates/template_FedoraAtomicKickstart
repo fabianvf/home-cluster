@@ -62,7 +62,7 @@ text
 
 ostreesetup --nogpg --osname="fedora-atomic" --remote="fedora-atomic-{{ fedora_version }}" --url="http://{{ foreman_hostname}}.{{ foreman_subdomain }}/atomic" --ref="fedora/{{ fedora_version }}/x86_64/atomic-host"
 
-services --disabled cloud-init,cloud-config,cloud-final,cloud-init-local
+services --disabled cloud-init,cloud-config,cloud-final,cloud-init-local --enabled sshd,docker
 rootpw --iscrypted <%= root_pass %>
 
 reboot
@@ -87,13 +87,15 @@ cat <<EOF >/etc/puppetlabs/puppet/puppet.conf
 <%= snippet 'puppet.conf' %>
 EOF
 
+service start docker
+
 docker pull docker.io/puppet/puppet-agent
 docker run -d \
   --restart always \
   --name puppet-agent \
   --hostname <%= @host %> \
   --net host  -v /tmp:/tmp -v /etc:/etc -v /var:/var -v /usr:/usr -v /lib64:/lib64 \
-  --privileged
+  --privileged \
   puppet/puppet-agent agent \
     --no-daemonize \
     --certname <%= @host.certname %> \
