@@ -86,6 +86,11 @@
 - include: sync_content.yml
 - include: fedora_atomic.yml
 
+- name: Set foreman to autosign certs on the foreman subdomain
+  lineinfile:
+    path: /etc/puppetlabs/puppet/autosign.conf
+    line: '*.{{ foreman_subdomain }}'
+
 - name: Read in the auth information for named
   command: awk -F '"' 'NF > 0 {print $2}' /etc/rndc.key
   register: result

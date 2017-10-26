@@ -214,7 +214,12 @@
       value: 'true'
     - key: 'ignore_facts_for_operatingsystem'
       value: 'true'
-
+    - key: 'update_ip_from_built_request'
+      value: 'true'
+    - key: 'update_subnets_from_facts'
+      value: 'true'
+    - key: 'update_environment_from_facts'
+      value: 'true'
 
 - name: Rebuild pxe default
   command: hammer template build-pxe-default

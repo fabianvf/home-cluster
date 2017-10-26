@@ -45,8 +45,13 @@ cat << EOF
 EOF
   tput sgr0
   read -t 30
-  set -x
-  sudo sed -i 's/dns=.*/dns=dnsmasq/' /etc/NetworkManager/NetworkManager.conf
+  if [[ "$(grep -q 'dns=' /etc/NetworkManager/NetworkManager.conf)" ]] ; then
+    set -x
+    sudo sed -i 's/dns=.*/dns=dnsmasq/' /etc/NetworkManager/NetworkManager.conf
+  else
+    set -x
+    sudo sed -i '/\[main\]/adns=dnsmasq' /etc/NetworkManager/NetworkManager.conf
+  fi
 fi
 
 set -x

@@ -56,3 +56,6 @@
     run_once: yes
 
   - meta: refresh_inventory
+
+  - debug:
+      var: groups.all
