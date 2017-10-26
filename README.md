@@ -13,8 +13,6 @@ My wife is a photographer, and generates between 1TB and 3TB of media per year. 
 - [x] Deployment of Openshift Origin
 - [ ] Deployment of Heketi and gluster
   - [ ] Configuration of gluster for dynamic persistent volume provisioning
-- [ ] Deployment of Glusterfs daemonset (or ceph if possible)
-  - [ ] Configuration of ceph|gluster for dynamic persistent volume provisioning
 - [ ] Deployment and configuration of various services (feel free to add PRs to expand this list, it's a wishlist)
   - [ ] [Seafile](https://www.seafile.com/en/home/)
   - [ ] [Collabora online](https://www.collaboraoffice.com/)
