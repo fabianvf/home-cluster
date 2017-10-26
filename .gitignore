@@ -1,5 +1,6 @@
 *.retry
 vagrant/.vagrant
+config.yml
 my_vars.yml
 openshift-ansible/
 foreman.cache
