@@ -1,35 +1,12 @@
 My home private cloud
 
-## Goals
+# Goals
 This is a repository of playbooks/scripts to deploy, configure, and manage a private cloud for your home (well, my home). Ideally I'd like this to be an easy way to set up your own home private cloud and scale it easily on hardware you have laying around. This would be useful for things like setting up your home with local network backups or connecting IOT devices (like security cameras and other sensors) without needing to send all your information to some third party.
 
-## Motivation
+# Motivation
 My wife is a photographer, and generates between 1TB and 3TB of media per year. I am a software engineer working on Openshift, and have a variety of applications running on our local network, spread around a ton of hardware. I'm sick of manually configuring/fixing things, and was hoping to leverage some of my professional experience to provide a secure local network backup system for my wife, and a good platform for hosting/running applications for me.
 
-## Prerequisites
-
-### Ansible
-
-`cp hosts.example inventory/hosts`, edit as appropriate.
-
-`cp my_vars.yml.example my_vars.yml`, edit as appropriate for overrides.
-
-### Hardware
-- 1 server that will handle meta-cluster stuff (AKA, foreman + VPN). I'm currently looking at running this on an Intel NUC or something. Raspberry Pi might work, but I think there may be some issues with foreman + PXE + ARM
-- N servers that will serve as openshift nodes. I'm currently using 5 old office desktops that I got on ebay for $30 each, they have Core 2 Duos and 4GB DDR3 RAM.
-  - More drives is better
-  - More RAM is better
-
-### Networking
-- Foreman needs a static IP + hostname
-- Your router needs to use Foreman for DNS (at least for a subdomain on your network)
-- Your router needs to use Foreman for TFTP
-
-### Software
-- ansible >= 2.3
-- TODO: audit dependencies
-
-## What will this do?
+# Roadmap
 - [x] Foreman deploy (including TFTP and DNS)
 - [x] Sync Fedora Atomic images to Foreman
 - [x] Provision nodes with Fedora Atomic
@@ -48,50 +25,136 @@ My wife is a photographer, and generates between 1TB and 3TB of media per year. 
   - [ ] [Emby](https://emby.media/)
   - [ ] [Plex](https://www.plex.tv/)
   - [ ] [Home Assistant](https://home-assistant.io/)
+  - [ ] [Organizr](https://github.com/causefx/Organizr)
 
 
-## Testing it out
-To test out this environment, I recommend using the vagrant environment defined in the `vagrant` directory.
+# Quickstart
 
-You  will need libvirt, ansible, the python netaddr and requests modules, and the vagrant-libvirt, vagrant-hostmanager, and vagrant-rsync-back vagrant plugins. Once you have these dependencies, just run
+## Dependencies
+You  will need:
+- ansible >= 2.3
+- python-netaddr
+- python-requests
+- openshift-ansible
+    - pyOpenSSL
+    - python-cryptography
+    - python-lxml
+- TODO: audit additional/implicit dependencies
+
+For Fedora:
 
 ```bash
-cd vagrant
+dnf install -y python-netaddr python-requests ansible pyOpenSSL python-cryptography python-lxml
+git clone https://github.com/openshift/openshift-ansible /usr/share/ansible/openshift-ansible
+```
+
+## Virtual environment
+To test out this environment, I recommend using the vagrant environment defined in the `vagrant` directory.
+
+_Note: I'm running Fedora 26 and have not tested anything out on any other OS. Also,
+this environment only supports libvirt. I would love to support virtualbox as well,
+so if you know anything about virtualbox, making this work with both would be awesome._
+
+You will need the additional dependencies of libvirt,
+and the vagrant-libvirt, vagrant-hostmanager, and vagrant-rsync-back vagrant plugins.
+
+```bash
+<package manager> install -y libvirt
+vagrant plugin install vagrant-libvirt
+vagrant plugin install vagrant-hostmanager
+vagrant plugin install vagrant-rsync
+```
+
+### Foreman
+
+Once you have the dependencies, then for an easy setup you can just run (from inside the vagrant directory):
+
+```bash
 ./run.sh
 ```
 
-You may need authenticate as root a few times for the libvirt networking config to take effect. This script will set up your libvirt network for network booting, bring up the vagrant machine, and set up foreman. After you run this script, run
+You may need authenticate as root a few times for the libvirt networking config to take effect. This script will set up your libvirt network for network booting, bring up the vagrant machine, and set up foreman.
+
+If you hate the idea of running a script written by a random person that messes with your networking and libvirt environment, or if the script just doesn't work for you, then just open it up and run through the steps by hand, adjusting as needed for your environment. Feel free to open up an issue or pop into the IRC channel if you have any trouble.
+
+
+### Nodes
+After you've set up the foreman box, just run:
 
 ```bash
-# This will likely need to be run as root
-./launch_node.sh
+sudo ./launch_node.sh
 ```
 
 to bring up a new node that will register to foreman and automatically be provisioned with Fedora Atomic. You can run this script as many times as you want until you have the desired number of openshift nodes.
 
+## Bare Metal
 
-## Prerequisites
-
-For non-vagrant deployments, here are the requirements:
+For deployment onto physical hosts or external VMs (ie anything that isn't the aforementioned vagrant environment)
 
 ### Hardware
-- 1 server that will handle meta-cluster stuff (AKA, foreman + VPN). I'm currently looking at running this on an Intel NUC or something. Raspberry Pi might work, but I think there may be some issues with foreman + PXE + ARM
-- N servers that will serve as openshift nodes. I'm currently using 5 old office desktops that I got on ebay for $30 each, they have Core 2 Duos and 4GB DDR3 RAM.
-  - More drives is better
-  - More RAM is better
+- 1 server that will host Foreman.
+    - The Foreman ansible roles assume that CentOS 7 is installed on this machine, use anything else at your own risk
+- N servers that will serve as openshift nodes.
+    - These servers will need to be configured to network boot. Most vendors provide these settings in the BIOS screen.
+    - At least one of your nodes will need to have > 1 disks, so that it can be tagged and used as a gluster storage host.
 
 ### Networking
 - Foreman needs a static IP + hostname
 - Your router needs to use Foreman for DNS (at least for a subdomain on your network)
 - Your router needs to use Foreman for TFTP
 
-### Software
-- ansible >= 2.3
-- python-netaddr
-- python-requests
-- TODO: audit dependencies
+Here's a sample dnsmasq configuration, from the vagrant environment:
 
-## Contributions welcome!
+```
+address=/foreman.example.org/192.168.17.11
+server=/example.org/192.168.17.11
+server=/17.168.192.in-addr.arpa/192.168.17.11
+dhcp-boot=pxelinux.0,foreman.example.org,192.168.17.11
+```
+
+### Foreman
+
+First, copy the `config.yml.example` file to `config.yml` and open it for editing. For a basic
+Foreman install, the most important options to consider are `foreman_hostname` and
+`foreman_subdomain`, which you should make match the networking entries you made above. For
+example, if my foreman IP is bound to `foreman.example.org`, I would set `foreman_hostname`
+to `foreman`, and `foreman_subdomain` to `example.org`. It is also recommended that you change
+the passwords from `changeme` to something more secure. If your Foreman machine has multiple
+NICs, you may also need to manually set the `foreman_dns_interface` to the correct one, as by
+default we select the primary interface from the ansible facts.
+
+To install Foreman, just run
+
+```bash
+ansible-playbook playbooks/foreman.yml -e @config.yml
+```
+
+This should run pretty painlessly, if there are any issues during the deployment of Foreman feel free to open an issue.
+
+
+## Openshift
+
+To install openshift you will need to clone the `openshift-ansible` project. By default, we will look for `openshift-ansible`
+in `/usr/share/ansible/`. To get the project there you can just run
+
+```bash
+git clone https://github.com/openshift/openshift-ansible.git /usr/share/ansible/openshift-ansible
+```
+
+If you've cloned or copied the project to another directory, you can set the location in the `openshift_ansible_dir`
+in your `config.yml`
+
+The openshift installation is the same no matter your environment. It uses a dynamic inventory pulled from Foreman, so
+all you need to do is run:
+
+```bash
+ansible-playbook playbooks/nodes.yml -e @config.yml
+```
+
+This should give you a working Openshift installation, feel free to open an issue if something falls over.
+
+
+# Contributions welcome!
 
 Feel free to hop into the IRC chat, submit issues/PRs, whatever! At first this will likely be very specific to my hardware setup, but I'll work on making it more generic, which should happen naturally over time as I mix and match my hardware more.
 
