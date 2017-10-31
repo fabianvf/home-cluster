@@ -57,16 +57,15 @@ EOF
 
 %end
 
-bootloader --timeout=3
+bootloader --timeout=3 --append="ds=nocloud\;seedfrom=/var/cloud-init/"
 text
 
-ostreesetup --nogpg --osname="fedora-atomic" --remote="fedora-atomic-{{ fedora_version }}" --url="http://{{ inventory_hostname }}/atomic" --ref="fedora/{{ fedora_version }}/x86_64/atomic-host"
+ostreesetup --nogpg --osname="fedora-atomic" --remote="fedora-atomic-{{ fedora_version }}" --url="http://{{ foreman_hostname}}.{{ foreman_subdomain }}/atomic" --ref="fedora/{{ fedora_version }}/x86_64/atomic-host"
 
-services --disabled cloud-init,cloud-config,cloud-final,cloud-init-local
+services --enabled cloud-init,cloud-config,cloud-final,cloud-init-local,sshd,docker
 rootpw --iscrypted <%= root_pass %>
 
 reboot
-
 
 %post
 #---- Install our SSH key ----
@@ -82,8 +81,30 @@ chmod 0600 /root/.ssh/authorized_keys
 ### fix up selinux context
 restorecon -R /root/.ssh/
 
+mkdir -p /etc/puppetlabs/puppet
+cat <<EOF >/etc/puppetlabs/puppet/puppet.conf
+<%= snippet 'puppet.conf' %>
+EOF
+
+#------------ configure cloud-init to run containerized puppet --------------
+mkdir /var/cloud-init
+
+cat << EOF>/var/cloud-init/meta-data
+instance-id: iid-local<%= @host.id %>
+local-hostname: <%= @host %>
+EOF
+
+cat << EOF>/var/cloud-init/user-data
+#cloud-config
+runcmd:
+- "systemctl start docker"
+- "docker pull docker.io/puppet/puppet-agent"
+- "docker run -d --restart always --name puppet-agent --hostname <%= @host %> --net host -v /tmp:/tmp -v /etc:/etc -v /var:/var -v /usr:/usr -v /lib64:/lib64 --privileged puppet/puppet-agent agent --no-daemonize --certname <%= @host.certname %> --server <%= @host.puppetmaster %>"
+EOF
+
+
 # Report success back to Foreman
-curl -s -o /dev/null --insecure <%= foreman_url('built') %>
+(curl -s -o /dev/null --insecure <%= foreman_url('built') %>
 ) 2>&1 | tee /mnt/sysimage/root/install.post.log
 
 exit 0

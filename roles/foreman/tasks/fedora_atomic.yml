@@ -27,7 +27,7 @@
     options: |
       --name "Fedora-Atomic {{ fedora_version }} Mirror"
       --os-family "Redhat"
-      --path "http://{{ inventory_hostname }}/fedora-atomic-{{ fedora_version }}/atomic/stable/{{ fedora_full_version_string }}/Atomic/x86_64/os/"
+      --path "http://{{ foreman_hostname }}.{{ foreman_subdomain }}/fedora-atomic/atomic/stable/{{ fedora_full_version_string }}/Atomic/x86_64/os/"
 
 
 - include: create_or_update.yml
@@ -78,7 +78,7 @@
   changed_when: "'already been taken' not in result.stderr"
 
 - name: Get OS ID
-  shell: hammer os list --search "Fedora-Atomic {{ fedora_version }}" | grep "Fedora-Atomic 26" | awk -F "|" '{print $1}'
+  shell: hammer os list --search "Fedora-Atomic {{ fedora_version }}" | grep "Fedora-Atomic {{ fedora_version }}" | awk -F "|" '{print $1}'
   register: fedora_atomic_os
 
 - name: Get template IDs
@@ -180,6 +180,22 @@
       --priority 0
       --max-count 1
 
+# global_PXELinux:
+#   We need to update the default pxelinux template that is
+#   used so that discovery is the default instead of local boot
+# discovery_auto:
+#   This will cause hosts to automatically provision themselves
+#   based on the discovery-rules present. This way we don't
+#   need to manually manage the hosts
+# safemode_render:
+#   This was breaking stuff, if anyone could explain it to me
+#   that would be great.
+# query_local_nameservers:
+#   DNS was broken, I don't really understand this one either
+# ignore_facts_for_operatingsystem
+#   /etc/fedora-release doesn't differentiate between normal
+#   and atomic fedora, so if we update the OS from puppet
+#   it will remove the fedora-atomic assignation from the host
 - name: Update settings
   command: |
     hammer settings set
@@ -196,7 +212,14 @@
       value: 'false'
     - key: 'query_local_nameservers'
       value: 'true'
-
+    - key: 'ignore_facts_for_operatingsystem'
+      value: 'true'
+    - key: 'update_ip_from_built_request'
+      value: 'true'
+    - key: 'update_subnets_from_facts'
+      value: 'true'
+    - key: 'update_environment_from_facts'
+      value: 'true'
 
 - name: Rebuild pxe default
   command: hammer template build-pxe-default

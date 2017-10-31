@@ -4,25 +4,26 @@
 Vagrant.configure("2") do |config|
   config.vm.box = "centos/7"
   config.ssh.insert_key = false
+
   config.hostmanager.enabled = true
   config.hostmanager.manage_host = true
   config.hostmanager.ignore_private_ip = false
   config.hostmanager.include_offline = true
+  config.vm.hostname = 'foreman.example.org'
 
   config.vm.synced_folder '.', '/vagrant', disabled: true
-  config.vm.synced_folder ".vagrant/content", "/var/lib/foreman/public/"
+  config.vm.synced_folder ".vagrant/content/fedora-atomic", "/var/lib/foreman/public/fedora-atomic", type: 'rsync'
+  config.vm.synced_folder ".vagrant/content/atomic", "/var/lib/foreman/public/atomic", type: 'rsync'
 
   config.vm.provision :shell, :path => "centos_7_x.sh"
 
   if Vagrant.has_plugin?("vagrant-cachier")
-    # config.cache.scope = :box
-    # config.cache.synced_folder_opts = {
-    #   type: :nfs,
-    #   mount_options: ['rw', 'vers=4', 'tcp', 'nolock']
-    # }
+    config.cache.scope = :box
+    config.cache.synced_folder_opts = {
+      type: 'rsync',
+    }
   end
 
-  config.vm.hostname = 'foreman.example.org'
   config.vm.network :private_network,
     :libvirt__network_name => "home-cluster-devel",
     :libvirt__dhcp_enabled => true,

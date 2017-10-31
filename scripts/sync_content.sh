@@ -35,4 +35,4 @@ mkdir -p ${sync_dir}
   --include "/atomic/stable/$fedora_full_version_string/Atomic/x86_64/os/**" \
   --exclude "*" \
   --out-format='<<CHANGED>>%i %n%L' \
-  rsync://dl.fedoraproject.org/fedora-alt ${sync_dir}/fedora-atomic-${fedora_version}
+  rsync://dl.fedoraproject.org/fedora-alt ${sync_dir}/fedora-atomic

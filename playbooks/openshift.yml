@@ -1,14 +1,6 @@
 ---
 
-- name: ensure required sub-projects exist
-  hosts: localhost
-  connection: local
-  tasks:
-    - name: clone projects
-      git:
-        repo: 'https://github.com/openshift/openshift-ansible.git'
-        dest: /tmp/openshift-ansible
-      when: clone_projects | default(True)
+- include: prep_inventory.yml
 
 - name: If no masters exist, fail out
   hosts: localhost
@@ -17,8 +9,7 @@
     - fail: msg="No master registered to foreman"
       when: groups['masters'] | length == 0
 
-
-- include: /tmp/openshift-ansible/playbooks/byo/config.yml
+- include: '{{ openshift_ansible_dir }}/playbooks/byo/config.yml'
   when: install_openshift|default(True)
 
 - hosts: oo_first_master
@@ -32,4 +23,4 @@
   gather_facts: false
   tasks:
     - name: oc login
-      command: oc login -u admin -p admin
+      command: oc login -u admin -p admin --insecure-skip-tls-verify=true https://master.{{ foreman_subdomain }}:8443
