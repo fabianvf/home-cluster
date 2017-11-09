@@ -16,12 +16,24 @@
   with_items:
     - centos-release-scl
     - epel-release
-    - python-dns
+    - git
     - "https://yum.puppetlabs.com/puppetlabs-release-pc1-el-7.noarch.rpm"
     - "https://yum.theforeman.org/releases/1.15/el7/x86_64/foreman-release.rpm"
     - foreman-installer
     - tfm-rubygem-hammer_cli_foreman_discovery
     - python-dns
+
+- name: TODO! HACK! Copy the unattended_orchestration patch
+  file:
+    src: unattended_orchestration.patch
+    dest: /root/unattended_orchestration.patch
+
+- name: TODO! HACK! Apply the patch to foreman
+  shell: git apply /root/unattended_orchestration.patch && touch /root/patch_applied
+  args:
+    chdir: /usr/share/foreman
+    creates: /root/patch_applied
+
 
 - name: start and enable foreman service
   service:
