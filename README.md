@@ -14,16 +14,36 @@ My wife is a photographer, and generates between 1TB and 3TB of media per year. 
 - [ ] Deployment of Heketi and gluster
   - [ ] Configuration of gluster for dynamic persistent volume provisioning
 - [ ] Deployment and configuration of various services (feel free to add PRs to expand this list, it's a wishlist)
-  - [ ] [Seafile](https://www.seafile.com/en/home/)
+  - [ ] [Seafile](https://www.seafile.com/en/home/) 
+    - [x][Containerized?](https://github.com/haiwen/seafile-docker) (just not built yet) (official)
+    - GPL v2.0
   - [ ] [Collabora online](https://www.collaboraoffice.com/)
-  - [ ] [NextCloud](https://nextcloud.com/) (probably mutually exclusive with seafile + collabora)
+    - [x][Containerized?](https://hub.docker.com/r/collabora/code/) (official)
+    - License unknown, but they claim it is FOSS. LibreOffice is Mozilla Public License v2.0
+  - [ ] [NextCloud](https://nextcloud.com/)
+    - [x][Containerized?](https://hub.docker.com/_/nextcloud/) (official)
+    - GNU AGPL v3.0
   - [ ] [ZoneMinder](https://zoneminder.com/)
+    - [x][Containerized?](https://hub.docker.com/r/kylejohnson/zoneminder/) (unofficial, but based on official dockerfile)
+    - GPL v2.0
   - [ ] [Monica](https://monicahq.com/)
-  - [ ] [Ambar](https://ambar.cloud/)
+    - [x][Containerized?](https://hub.docker.com/r/monicahq/monicahq/) (official)
+    - GNU AGPL v3.0
+  - ~~[ ] [Ambar](https://ambar.cloud/)~~
+    - ~~[ ]Containerized?~~
+    - Fair source licensed, disqualified
   - [ ] [Emby](https://emby.media/)
+    - [x][Containerized?](https://hub.docker.com/r/emby/embyserver/) (official)
+    - GPL v2.0
   - [ ] [Plex](https://www.plex.tv/)
+    - [x][Containerized?](https://hub.docker.com/r/plexinc/pms-docker/) (official)
+    - GPL v2.0 (for the host software, client is proprietary)
   - [ ] [Home Assistant](https://home-assistant.io/)
+    - [x][Containerized?](https://hub.docker.com/r/homeassistant/home-assistant/)
+    - Apache v2.0 
   - [ ] [Organizr](https://github.com/causefx/Organizr)
+    - [x][Containerized?](https://hub.docker.com/r/lsiocommunity/organizr/) (community contributed, but officially endorsed)
+    - GPL v3.0
 
 
 # Quickstart
