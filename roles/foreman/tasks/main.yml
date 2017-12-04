@@ -108,3 +108,9 @@
     record: '*.apps.{{ foreman_subdomain }}.'
     zone: '{{ foreman_subdomain }}.'
     value: 'master'
+
+
+- name: Copy puppet ca crt to localhost so that it can be easily imported to a browser
+  fetch:
+    src: /etc/puppetlabs/puppet/ssl/ca_crt.pem
+    dest: '{{ foreman_cert_dest }}'

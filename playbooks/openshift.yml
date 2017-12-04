@@ -9,7 +9,7 @@
     - fail: msg="No master registered to foreman"
       when: groups['masters'] | length == 0
 
-- include: '{{ openshift_ansible_dir }}/playbooks/byo/config.yml'
+- include: '{{ openshift_ansible_dir|default("/usr/share/ansible/openshift-ansible") }}/playbooks/byo/config.yml'
   when: install_openshift|default(True)
 
 - hosts: oo_first_master

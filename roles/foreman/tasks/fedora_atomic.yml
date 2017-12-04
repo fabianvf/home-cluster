@@ -27,7 +27,7 @@
     options: |
       --name "Fedora-Atomic {{ fedora_version }} Mirror"
       --os-family "Redhat"
-      --path "http://{{ foreman_hostname }}.{{ foreman_subdomain }}/fedora-atomic/atomic/stable/{{ fedora_full_version_string }}/Atomic/x86_64/os/"
+      --path "{{ fedora_boot_content_url }}"
 
 
 - include: create_or_update.yml
