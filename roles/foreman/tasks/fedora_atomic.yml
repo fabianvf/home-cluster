@@ -180,39 +180,55 @@
       --priority 0
       --max-count 1
 
-# global_PXELinux:
-#   We need to update the default pxelinux template that is
-#   used so that discovery is the default instead of local boot
+# ansible_ssh_pass:
+#   The default password to use when trying to run ansible roles.
 # discovery_auto:
 #   This will cause hosts to automatically provision themselves
 #   based on the discovery-rules present. This way we don't
 #   need to manually manage the hosts
-# safemode_render:
-#   This was breaking stuff, if anyone could explain it to me
-#   that would be great.
-# query_local_nameservers:
-#   DNS was broken, I don't really understand this one either
+# global_PXELinux:
+#   We need to update the default pxelinux template that is
+#   used so that discovery is the default instead of local boot
 # ignore_facts_for_operatingsystem
 #   /etc/fedora-release doesn't differentiate between normal
 #   and atomic fedora, so if we update the OS from puppet
 #   it will remove the fedora-atomic assignation from the host
+# query_local_nameservers:
+#   DNS was broken, I don't really understand this.
+# safemode_render:
+#   This was breaking stuff, if anyone could explain it to me
+#   that would be great.
+# unattended_orchestration:
+#   This will allow puppet reports to update the DNS for a host
+#   if the IP address has changed
+# update_ip_from_built_request:
+#   This will update the foreman host IP when the host reports
+#   itself as built. This should help a bit with IP drift from
+#   the first reboot.
+# update_subnets_from_facts:
+# update_environment_from_facts:
+#   These two settings just tell us to update the host entry based 
+#   on facts reported by puppet. This may be a good or bad idea,
+#   I don't really know. Seemed like the sort of thing we'd want.
 - name: Update settings
   command: |
     hammer settings set
       --name "{{ item.key }}"
       --value "{{ item.value }}"
   with_items:
-    - key: 'global_PXELinux'
-      value: 'Discovery PXELinux Template'
     - key: 'ansible_ssh_pass'
       value: '{{ foreman_provisioning_password }}'
     - key: 'discovery_auto'
       value: 'true'
-    - key: 'safemode_render'
-      value: 'false'
+    - key: 'global_PXELinux'
+      value: 'Discovery PXELinux Template'
+    - key: 'ignore_facts_for_operatingsystem'
+      value: 'true'
     - key: 'query_local_nameservers'
       value: 'true'
-    - key: 'ignore_facts_for_operatingsystem'
+    - key: 'safemode_render'
+      value: 'false'
+    - key: 'unattended_orchestration'
       value: 'true'
     - key: 'update_ip_from_built_request'
       value: 'true'
