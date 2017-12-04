@@ -19,9 +19,12 @@
     pause:
       prompt: |
         ======================================================================================
-        = Foreman has been configured with tftp and is available at {{ inventory_hostname }}
+        = Foreman has been configured with tftp and is available at {{ inventory_hostname }}.
         =
-        = Please ensure your router has been configured to route tftp request to Foreman
+        = The foreman ca crt has been copied to {{ foreman_cert_dest }}
+        = You can import it to your browser to get rid of those pesky ssl errors.
+        =
+        = Please ensure your router has been configured to route tftp request to Foreman.
         =
         = If your network has been properly configured, and your hosts are set to pxeboot,
         = all you need to do now is boot the hosts and wait for them to come up.
