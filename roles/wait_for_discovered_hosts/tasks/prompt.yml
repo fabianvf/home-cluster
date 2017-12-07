@@ -1,0 +1,37 @@
+---
+
+- name: Time to boot some hosts!
+  failed_when: false
+  register: stuff
+  vars:
+    message: |
+      ======================================================================================
+      = Foreman has been configured with tftp and is available at {{ inventory_hostname }}.
+      =
+      = The foreman ca crt has been copied to {{ foreman_cert_dest }}
+      = You can import it to your browser to get rid of those pesky ssl errors.
+      =
+      = Please ensure your router has been configured to route tftp request to Foreman.
+      =
+      = If your network has been properly configured, and your hosts are set to pxeboot,
+      = all you need to do now is boot the hosts and wait for them to come up.
+      =
+      = If the installation is cancelled here for whatever reason, you can continue the
+      = install manually by running:.
+      =
+      =      ansible-playbook -i inventory nodes.yml
+      =
+      = So far {{ groups.nodes | length }} hosts have been discovered
+      = Nodes:
+      = - {{ groups.nodes | join("\n= - ")}}
+      =
+      = If all your hosts are listed, press <ctrl+c> and hit A to abort this loop. This will
+      = mark this task as failed, just ignore it.
+      =
+      = If all your hosts are not listed, press <ctrl+c> and hit C to refresh the inventory
+      ======================================================================================
+  pause:
+    prompt: "{{ message.split('\\n') | join('\n') }}"
+
+- name: Refresh inventory from foreman
+  meta: refresh_inventory
