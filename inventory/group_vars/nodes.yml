@@ -1,3 +1,4 @@
 ---
 
 openshift_node_labels: "{'region': 'primary', 'zone': 'default'}"
+openshift_node_kubelet_args: {volume-plugin-dir: [/var/lib/origin/volumeplugins]}

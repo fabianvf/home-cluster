@@ -57,12 +57,14 @@ EOF
 fi
 
 set -x
-cat << EOF | sudo tee /etc/NetworkManager/dnsmasq.d/home-cluster.conf
+if [[ ! -e "/etc/NetworkManager/dnsmasq.d/home-cluster-conf" ]] ; then
+  cat << EOF | sudo tee /etc/NetworkManager/dnsmasq.d/home-cluster.conf
 address=/foreman.example.org/192.168.17.11
 server=/example.org/192.168.17.11
 server=/17.168.192.in-addr.arpa/192.168.17.11
 EOF
-sudo systemctl restart NetworkManager
+  sudo systemctl restart NetworkManager
+fi
 
 # END: Network configuration
 

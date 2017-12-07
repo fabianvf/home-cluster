@@ -13,6 +13,10 @@
   - setup:
   - set_fact:
       upgrade: true
+  - name: disable selinux (sorry Jason)
+    selinux:
+      state: disabled
+
   roles:
     - atomic_upgrade
     - role: reboot

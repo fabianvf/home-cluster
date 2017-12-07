@@ -5,7 +5,7 @@ foreman_installer_additional_options: ""
 fedora_content_mirror: "dl.fedoraproject.org/fedora-alt"
 fedora_boot_file_url_base: "dl.fedoraproject.org/pub/alt"
 fedora_rsync_boot_files: no
-foreman_cert_dir: /tmp/foreman_ca_crt.pem
+foreman_cert_dest: /tmp/foreman_ca_crt.pem
 
 authorized_keys: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
 
