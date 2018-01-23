@@ -1,4 +1,6 @@
 #!/usr/bin/bash
+SCRIPT_ROOT="$(dirname "${BASH_SOURCE}")/"
+
 textred=$(tput setaf 1)
 cat << EOF
   ${textred}WARNING: This script is going to make modifications as root to your libvirt networks
@@ -55,21 +57,23 @@ EOF
 fi
 
 set -x
-cat << EOF | sudo tee /etc/NetworkManager/dnsmasq.d/home-cluster.conf
+if [[ ! -e "/etc/NetworkManager/dnsmasq.d/home-cluster-conf" ]] ; then
+  cat << EOF | sudo tee /etc/NetworkManager/dnsmasq.d/home-cluster.conf
 address=/foreman.example.org/192.168.17.11
 server=/example.org/192.168.17.11
 server=/17.168.192.in-addr.arpa/192.168.17.11
 EOF
-sudo systemctl restart NetworkManager
+  sudo systemctl restart NetworkManager
+fi
 
 # END: Network configuration
 
 # BEGIN: VM configuration
-mkdir -p .vagrant/content/{atomic,fedora-atomic}
+mkdir -p ${SCRIPT_ROOT}.vagrant/content/{atomic,fedora-atomic}
 
 sudo virsh net-destroy home-cluster-devel
 sudo virsh net-undefine home-cluster-devel
-sudo virsh net-define network.xml
+sudo virsh net-define ${SCRIPT_ROOT}network.xml
 sudo virsh net-start home-cluster-devel
 
 set -e
@@ -78,7 +82,7 @@ vagrant up --provision
 
 # END: VM configuration
 
-(cd .. ; ansible-playbook -i inventory playbooks/foreman.yml -e "foreman_dns_interface=eth1" -e "foreman_subdomain=example.org" -e "foreman_hostname=foreman")
+(cd ${SCRIPT_ROOT}.. ; ansible-playbook -i inventory playbooks/foreman.yml -e "foreman_dns_interface=eth1" -e "foreman_subdomain=example.org" -e "foreman_hostname=foreman")
 
 if [[ ! -z "$(vagrant plugin list | grep rsync-back)" ]]; then
   vagrant rsync-back

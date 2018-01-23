@@ -1,0 +1,8 @@
+---
+
+- block:
+  - include_tasks: prompt.yml
+    with_sequence: count=100
+  rescue:
+    - debug: var=groups.nodes
+    - meta: clear_host_errors
