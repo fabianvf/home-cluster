@@ -96,12 +96,12 @@
   command: awk -F '"' 'NF > 0 {print $2}' /etc/rndc.key
   register: result
 
-# TODO: This should happen after the openshift provisioning succeeds, and should
-#       use the subdomain of the master instead of being hardcoded to 'master'
 - set_fact:
     key_name: '{{ result.stdout_lines[0] }}'
     key_secret: '{{ result.stdout_lines[-1] }}'
 
+# TODO: This should happen after the openshift provisioning succeeds, and should
+#       use the subdomain of the master instead of being hardcoded to 'master'
 - name: Add the wildcard redirect for openshift master
   nsupdate:
     key_name: '{{ key_name }}'
@@ -111,7 +111,6 @@
     record: '*.apps.{{ foreman_subdomain }}.'
     zone: '{{ foreman_subdomain }}.'
     value: 'master'
-
 
 - name: Copy puppet ca crt to localhost so that it can be easily imported to a browser
   fetch:

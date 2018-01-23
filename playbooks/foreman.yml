@@ -14,4 +14,3 @@
   roles:
     - foreman
     - reboot
-    - wait_for_discovered_hosts

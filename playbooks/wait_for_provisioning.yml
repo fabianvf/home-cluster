@@ -1,0 +1,8 @@
+---
+
+- import_playbook: prep_inventory.yml
+
+- name: Wait for discovered hosts
+  hosts: localhost
+  roles:
+    - wait_for_discovered_hosts
