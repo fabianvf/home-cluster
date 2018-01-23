@@ -1,0 +1,12 @@
+---
+
+prompt_for_hosts: yes
+number_of_hosts: 0
+host_prefix: '{{ "master" if number_of_hosts < 2 else "node" }}'
+hostname: '{{ host_prefix }}{{ number_of_hosts - 1 if number_of_hosts > 1 else ""}}'
+
+ping_delay: 60
+sleep: 30
+timeout: 3600
+
+foreman_cert_dest: /tmp/foreman_ca_crt.pem

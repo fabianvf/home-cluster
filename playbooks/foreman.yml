@@ -15,9 +15,3 @@
     - foreman
     - reboot
     - wait_for_discovered_hosts
-
-
-- name: Does this run?
-  hosts: foreman
-  tasks:
-    - debug: msg=yes

@@ -1,8 +1,25 @@
 ---
 
+- set_fact:
+    reachable: {}
+    resolved_dns: []
+
+- name: Check if host is accessible
+  wait_for: host={{ item }} port=22 timeout=3
+  register: hosts_accessible
+  failed_when: False
+  with_items: '{{ groups.nodes }}'
+
+- set_fact:
+    resolved_dns: '{{ resolved_dns + [item.item + " ("  + lookup("dig", item.item) + "); reachable: "  + ((item.get("state") == "started")  | string)] }}'
+  with_items: '{{ hosts_accessible.results }}'
+
+- name: resolve domain names
+  set_fact:
+  with_items: '{{ groups.nodes }}'
+
+
 - name: Time to boot some hosts!
-  failed_when: false
-  register: stuff
   vars:
     message: |
       ======================================================================================
@@ -23,7 +40,7 @@
       =
       = So far {{ groups.nodes | length }} hosts have been discovered
       = Nodes:
-      = - {{ groups.nodes | join("\n= - ")}}
+      = {{ "-" if groups.nodes else "" }} {{ resolved_dns | join("\n= - ")}}
       =
       = If all your hosts are listed, press <ctrl+c> and hit A to abort this loop. This will
       = mark this task as failed, just ignore it.

@@ -1,8 +1,21 @@
 ---
 
-- block:
+- name: Wait for discovered hosts (interactive)
+  when: prompt_for_hosts
+  block:
   - include_tasks: prompt.yml
     with_sequence: count=100
+    loop_control:
+      loop_var: throwaway
   rescue:
-    - debug: var=groups.nodes
     - meta: clear_host_errors
+
+- name: Time to boot some hosts! Power up your hosts and this will continue when they are ready.
+  when: number_of_hosts and not prompt_for_hosts
+  block:
+    - name: Wait for {{ hostname }}.{{ foreman_subdomain }} to become reachable
+      wait_for_connection:
+        delay: '{{ ping_delay }}'
+        sleep: '{{ ping_sleep }}'
+        timeout: '{{ ping_timeout }}'
+      delegate_to: '{{ hostname }}.{{ foreman_subdomain }}'
