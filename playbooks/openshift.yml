@@ -9,8 +9,8 @@
     - fail: msg="No master registered to foreman"
       when: groups['masters'] | length == 0
 
-- import_playbook: '{{ openshift_ansible_dir|default("/usr/share/ansible/openshift-ansible") }}/playbooks/byo/config.yml'
-  when: install_openshift|default(True)
+- import_playbook: '{{ openshift_ansible_dir|default("/usr/share/ansible/openshift-ansible") }}/playbooks/prerequisites.yml'
+- import_playbook: '{{ openshift_ansible_dir|default("/usr/share/ansible/openshift-ansible") }}/playbooks/deploy_cluster.yml'
 
 - hosts: oo_first_master
   gather_facts: false

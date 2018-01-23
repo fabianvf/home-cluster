@@ -13,12 +13,12 @@
 - name: install packages
   package:
     name: '{{ item }}'
+    state: latest
   with_items:
-    - centos-release-scl
     - epel-release
-    - foreman-release-scl
     - "https://yum.puppetlabs.com/puppetlabs-release-pc1-el-7.noarch.rpm"
-    - "https://yum.theforeman.org/releases/nightly/el7/x86_64/foreman-release.rpm"
+    - "https://yum.theforeman.org/releases/latest/el7/x86_64/foreman-release.rpm"
+    - foreman-release-scl
     - foreman-installer
     - tfm-rubygem-hammer_cli_foreman_discovery
     - python-dns

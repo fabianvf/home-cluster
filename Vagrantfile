@@ -6,7 +6,7 @@ Vagrant.configure("2") do |config|
 
   config.hostmanager.enabled = true
   config.hostmanager.manage_host = true
-  config.hostmanager.manage_guests = true
+  config.hostmanager.manage_guest = true
   config.hostmanager.ignore_private_ip = false
   config.hostmanager.include_offline = true
 
@@ -18,14 +18,19 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.define 'foreman.example.org', :primary => true do |foreman|
-    foreman.ssh.username = 'root'
-    foreman.ssh.password = 'changeme'
     foreman.ssh.insert_key = 'true'
     foreman.vm.box = "centos/7"
     foreman.vm.hostname = 'foreman.example.org'
-    foreman.vm.network :private_network, :mac => "52:11:22:33:44:41", :ip => '192.168.17.11'
+    foreman.vm.network :private_network,
+      :mac => "52:11:22:33:44:41",
+      :ip => '192.168.17.11',
+      :libvirt__network_name => "home-cluster",
+      :libvirt__dhcp_enabled => true,
+      :libvirt__netmask => "255.255.255.0",
+      :libvirt__dhcp_bootp_file => "pxelinux.0",
+      :libvirt__dhcp_bootp_server => "192.168.17.11"
+
     foreman.vm.synced_folder '.', '/vagrant', disabled: true
-    foreman.vm.provision :shell, :inline => "if  ! grep -q \"^PermitRootLogin yes\" /etc/ssh/sshd_config ; then sed -i -e '/^PermitRootLogin/s/^.*$/PermitRootLogin yes/' /etc/ssh/sshd_config ; fi"
 
     foreman.vm.provision :ansible do |ansible|
       ansible.playbook = 'playbooks/foreman.yml'
@@ -35,22 +40,22 @@ Vagrant.configure("2") do |config|
     end
   end
 
-  (1..ENV["NUM_NODES"].to_i||3).map { |i| "node#{i}.example.com" }.each do |name|
+  (1..ENV["NUM_NODES"].to_i||3).map { |i| "node#{i}.example.org" }.each do |name|
     config.vm.define name do |node|
+      node.hostmanager.manage_guest = false
       node.vm.hostname = name
+
       node.vm.provider :libvirt do |domain|
         domain.storage :file, :size => '80G', :type => 'qcow2'
+        domain.mgmt_attach = 'false'
+        domain.management_network_name = 'home-cluster'
+        domain.management_network_address = "192.168.17.0/24"
+        domain.management_network_mode = "nat"
         domain.boot 'network'
         domain.boot 'hd'
+      end
     end
   end
-
-  config.vm.network :private_network,
-    :libvirt__network_name => "home-cluster",
-    :libvirt__dhcp_enabled => true,
-    :libvirt__netmask => "255.255.255.0",
-    :libvirt__dhcp_bootp_file => "pxelinux.0",
-    :libvirt__dhcp_bootp_server => "192.168.17.11"
 
   config.vm.provider :libvirt do |libvirt|
     libvirt.driver = "kvm"
