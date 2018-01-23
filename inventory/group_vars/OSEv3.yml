@@ -14,8 +14,7 @@ openshift_master_identity_providers: [{'name': 'htpasswd_auth','login': 'true', 
 openshift_schedulable: true
 openshift_set_hostname: true
 ansible_python_interpreter: /usr/bin/python3
-openshift_docker_insecure_registies: ['registry.access.redhat/com']
-# openshift_ca_host: '{{ groups.masters.0 }}'
-# glusterfs_devices: '{{ (ansible_devices.keys()|sort)[1:] }}'
-# openshift_hosted_registry_storage_kind: glusterfs
-# openshift_hosted_registry_storage_glusterfs_swap: True
+openshift_storage_glusterfs_storageclass_default: true
+
+ansible_service_broker_registry_whitelist:
+  - '.*'

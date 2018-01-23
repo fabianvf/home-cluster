@@ -31,8 +31,6 @@
           [foreman]
           {{ foreman_hostname }}.{{ foreman_subdomain }}
 
-          [masters]
-
           [masters:children]
           foreman_hostgroup_openshift_nodes_openshift_master
 
@@ -40,8 +38,6 @@
           masters
 
           [foreman_hostgroup_openshift_nodes_openshift_master]
-
-          [nodes]
 
           [nodes:children]
           foreman_hostgroup_openshift_nodes
@@ -51,6 +47,9 @@
 
           [OSEv3:children]
           masters
+          nodes
+
+          [glusterfs:children]
           nodes
       dest: '{{ inventory_dir}}/home_cluster_hosts'
     run_once: yes
