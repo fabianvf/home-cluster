@@ -1,2 +1,4 @@
---- 
+---
+
 openshift_node_labels: "{'region': 'infra', 'zone': 'default'}"
+osm_controller_args: {flex-volume-plugin-dir: [/var/lib/origin/volumeplugins]}

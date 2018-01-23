@@ -1,4 +1,11 @@
-- shell: curl https://download.fedoraproject.org/pub/alt/atomic/stable -L | grep "Fedora-Atomic" | tail -n1 |  sed -rn 's|.*<a href="(.*)/">.*|\1|p'
+- set_fact:
+    fedora_atomic_version_suffix: '{{ "-" + fedora_version|string if fedora_version is defined else ""}}'
+
+- shell: >
+    curl https://download.fedoraproject.org/pub/alt/atomic/stable -L
+    | grep "Fedora-Atomic{{ fedora_atomic_version_suffix }}"
+    | tail -n1
+    |  sed -rn 's|.*<a href="(.*)/">.*|\1|p'
   register: latest_fedora_response
 
 - shell: echo {{ latest_fedora_response.stdout }} | awk -F "-" '{print $3}'
@@ -19,7 +26,6 @@
 - set_fact:
     gpg_key_url: "https://getfedora.org/static/{{ fedora_gpg_keyfile[fedora_version] }}"
     gpg_key_file: /etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-{{ fedora_version }}-x86_64
-
 
 - name: Download the fedora {{ fedora_version }} GPG key
   uri:
@@ -52,21 +58,30 @@
 
 - name: Compose ostree
   command: rpm-ostree compose tree --repo=/var/lib/foreman/public/atomic /tmp/fedora-atomic/fedora-atomic-host.json
+  args:
+    creates: '/var/lib/foreman/public/atomic/refs/heads/fedora/{{ fedora_version }}/x86_64/atomic-host'
 
-- name: rsync Fedora Atomic {{ fedora_version }} content for pxe boot
-  command: |
-    /usr/bin/rsync
-      --delay-updates -F
-      --compress
-      --archive
-      --include '/atomic'
-      --include '/atomic/stable'
-      --include '/atomic/stable/{{ fedora_full_version_string }}'
-      --include '/atomic/stable/{{ fedora_full_version_string }}/Atomic'
-      --include '/atomic/stable/{{ fedora_full_version_string }}/Atomic/x86_64'
-      --include '/atomic/stable/{{ fedora_full_version_string }}/Atomic/x86_64/os'
-      --include '/atomic/stable/{{ fedora_full_version_string }}/Atomic/x86_64/os/**'
-      --exclude '*'
-      --out-format='<<CHANGED>>%i %n%L'
-      rsync://{{ fedora_content_mirror }} /var/lib/foreman/public/fedora-atomic
-  ignore_errors: true
+- when: fedora_rsync_boot_files
+  block:
+    - name: rsync Fedora Atomic {{ fedora_version }} content for pxe boot
+      command: |
+        /usr/bin/rsync
+          --delay-updates -F
+          --compress
+          --archive
+          --include '/atomic'
+          --include '/atomic/stable'
+          --include '/atomic/stable/{{ fedora_full_version_string }}'
+          --include '/atomic/stable/{{ fedora_full_version_string }}/Atomic'
+          --include '/atomic/stable/{{ fedora_full_version_string }}/Atomic/x86_64'
+          --include '/atomic/stable/{{ fedora_full_version_string }}/Atomic/x86_64/os'
+          --include '/atomic/stable/{{ fedora_full_version_string }}/Atomic/x86_64/os/**'
+          --exclude '*'
+          --out-format='<<CHANGED>>%i %n%L'
+          rsync://{{ fedora_content_mirror }} /var/lib/foreman/public/fedora-atomic
+
+    - set_fact:
+        fedora_content_host: "{{ foreman_hostname }}.{{ foreman_subdomain }}/fedora_atomic"
+
+- set_fact:
+    fedora_boot_content_url: "http://{{ fedora_content_host |default(fedora_boot_file_url_base) }}/atomic/stable/{{ fedora_full_version_string }}/Atomic/x86_64/os/"

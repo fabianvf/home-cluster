@@ -20,17 +20,17 @@
   with_fileglob:
     - 'templates/*'
 
-- include: create_or_update.yml
+- import_tasks: create_or_update.yml
   vars:
     name: Fedora-Atomic {{ fedora_version }} Mirror
     resource: medium
     options: |
       --name "Fedora-Atomic {{ fedora_version }} Mirror"
       --os-family "Redhat"
-      --path "http://{{ foreman_hostname }}.{{ foreman_subdomain }}/fedora-atomic/atomic/stable/{{ fedora_full_version_string }}/Atomic/x86_64/os/"
+      --path "{{ fedora_boot_content_url }}"
 
 
-- include: create_or_update.yml
+- import_tasks: create_or_update.yml
   vars:
     name: Discovery PXELinux Template
     resource: template
@@ -40,7 +40,7 @@
       --locked "no"
       --file /tmp/templates/template_DiscoveryPXEBoot
 
-- include: create_or_update.yml
+- import_tasks: create_or_update.yml
   vars:
     name: Fedora-Atomic {{ fedora_version }} Kickstart
     resource: template
@@ -51,7 +51,7 @@
       --file /tmp/templates/template_FedoraAtomicKickstart
 
 
-- include: create_or_update.yml
+- import_tasks: create_or_update.yml
   vars:
     name: "Fedora-Atomic"
     resource: os
@@ -92,7 +92,7 @@
   command: hammer os set-default-template --id {{ fedora_atomic_os.stdout }} --config-template-id {{ item.stdout }}
   with_items: '{{ template_ids.results }}'
 
-- include: create_or_update.yml
+- import_tasks: create_or_update.yml
   vars:
     name: '{{ foreman_subdomain }}'
     resource: domain
@@ -100,13 +100,13 @@
       --dns-id 1
       --name '{{ foreman_subdomain }}'
 
-- include: create_or_update.yml
+- import_tasks: create_or_update.yml
   name: production
   vars:
     resource: environment
     options: "--name production"
 
-- include: create_or_update.yml
+- import_tasks: create_or_update.yml
   vars:
     name: default
     resource: subnet
@@ -119,7 +119,7 @@
       --domain-ids 1
       --tftp-id 1
 
-- include: create_or_update.yml
+- import_tasks: create_or_update.yml
   vars:
     name: openshift-nodes
     resource: hostgroup
@@ -137,7 +137,7 @@
         --medium "Fedora-Atomic {{ fedora_version }} Mirror"
         --pxe-loader '{{ pxe_loader | default("PXELinux BIOS")}}'
 
-- include: create_or_update.yml
+- import_tasks: create_or_update.yml
   vars:
     name: openshift-master
     resource: hostgroup
@@ -155,26 +155,26 @@
         --medium "Fedora-Atomic {{ fedora_version }} Mirror"
         --pxe-loader '{{ pxe_loader | default("PXELinux BIOS")}}'
 
-- include: create_or_update.yml
+- import_tasks: create_or_update.yml
   vars:
     name: openshift-nodes
     resource: discovery-rule
     options: |
       --enabled yes
       --hostgroup "openshift-nodes"
-      --hostname "node<%=@host.id%>"
+      --hostname "node<%=@host.id-2%>"
       --name "openshift-nodes"
       --search "*"
       --priority 1
 
-- include: create_or_update.yml
+- import_tasks: create_or_update.yml
   vars:
     name: openshift-master
     resource: discovery-rule
     options: |
       --enabled yes
       --hostgroup "openshift-master"
-      --hostname "master"
+      --hostname "master<%= @host.id != 2 ? id-1 : '' %>"
       --name "openshift-master"
       --search "*"
       --priority 0
@@ -198,7 +198,7 @@
 # safemode_render:
 #   This was breaking stuff, if anyone could explain it to me
 #   that would be great.
-# unattended_orchestration:
+# enable_orchestration_on_fact_import:
 #   This will allow puppet reports to update the DNS for a host
 #   if the IP address has changed
 # update_ip_from_built_request:
@@ -228,7 +228,7 @@
       value: 'true'
     - key: 'safemode_render'
       value: 'false'
-    - key: 'unattended_orchestration'
+    - key: 'enable_orchestration_on_fact_import'
       value: 'true'
     - key: 'update_ip_from_built_request'
       value: 'true'

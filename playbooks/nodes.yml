@@ -1,3 +1,3 @@
-- include: prep_inventory.yml
-- include: atomic.yml
-- include: openshift.yml
+- import_playbook: prep_inventory.yml
+- import_playbook: atomic.yml
+- import_playbook: openshift.yml
