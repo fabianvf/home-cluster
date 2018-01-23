@@ -16,7 +16,6 @@ if [ "$?" != 0 ]; then
   echo "Please update and continue."
   exit 1
 fi
-mkdir -p .libvirt/images
 
 virt-install \
   --name ${NAME} \

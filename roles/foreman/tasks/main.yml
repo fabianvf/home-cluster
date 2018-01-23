@@ -16,9 +16,8 @@
   with_items:
     - centos-release-scl
     - epel-release
-    - python-dns
     - "https://yum.puppetlabs.com/puppetlabs-release-pc1-el-7.noarch.rpm"
-    - "https://yum.theforeman.org/releases/1.15/el7/x86_64/foreman-release.rpm"
+    - "https://yum.theforeman.org/releases/nightly/el7/x86_64/foreman-release.rpm"
     - foreman-installer
     - tfm-rubygem-hammer_cli_foreman_discovery
     - python-dns
@@ -45,6 +44,7 @@
         --foreman-proxy-dns-zone={{ foreman_subdomain }}
         --foreman-proxy-dns-reverse={{ foreman_proxy_dns_reverse }}
         --foreman-proxy-foreman-base-url=https://{{ foreman_hostname }}.{{ foreman_subdomain }}
+        --foreman-proxy-plugin-discovery-install-images=true
         --foreman-proxy-bmc
 
 - name: print foreman command
@@ -56,7 +56,7 @@
   command: "{{ foreman_install_cmd }}"
 
 - name: Install discovery images
-  command: foreman-installer --foreman-plugin-discovery-install-images=true
+  shell: "wget http://downloads.theforeman.org/discovery/nightly/fdi-image-latest.tar -O - | tar x --overwrite -C /var/lib/tftpboot/boot"
 
 - name: open ports
   firewalld:
@@ -83,8 +83,8 @@
     enabled: yes
     state: started
 
-- include: sync_content.yml
-- include: fedora_atomic.yml
+- import_tasks: sync_content.yml
+- import_tasks: fedora_atomic.yml
 
 - name: Set foreman to autosign certs on the foreman subdomain
   lineinfile:
@@ -95,6 +95,8 @@
   command: awk -F '"' 'NF > 0 {print $2}' /etc/rndc.key
   register: result
 
+# TODO: This should happen after the openshift provisioning succeeds, and should
+#       use the subdomain of the master instead of being hardcoded to 'master'
 - set_fact:
     key_name: '{{ result.stdout_lines[0] }}'
     key_secret: '{{ result.stdout_lines[-1] }}'

@@ -58,6 +58,8 @@
 
 - name: Compose ostree
   command: rpm-ostree compose tree --repo=/var/lib/foreman/public/atomic /tmp/fedora-atomic/fedora-atomic-host.json
+  args:
+    creates: '/var/lib/foreman/public/atomic/refs/heads/fedora/{{ fedora_version }}/x86_64/atomic-host'
 
 - when: fedora_rsync_boot_files
   block:
