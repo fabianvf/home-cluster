@@ -4,15 +4,17 @@ ansible_ssh_user: root
 os_update: true
 
 openshift_master_default_subdomain: "apps.{{ foreman_subdomain }}"
-etcd_image: quay.io/coreos/etcd:latest
+# etcd_image: quay.io/coreos/etcd:latest
 openshift_deployment_type: origin
 containerized: true
+openshift_use_system_containers: true
 openshift_disable_check: memory_availability
-openshift_image_tag: v3.7.0
-openshift_master_identity_providers: "[{'name': 'htpasswd_auth','login': 'true', 'challenge': 'true','kind': 'AllowAllPasswordIdentityProvider'}]"
+openshift_image_tag: latest
+openshift_master_identity_providers: [{'name': 'htpasswd_auth','login': 'true', 'challenge': 'true','kind': 'AllowAllPasswordIdentityProvider'}]
 openshift_schedulable: true
 openshift_set_hostname: true
 ansible_python_interpreter: /usr/bin/python3
+openshift_docker_insecure_registies: ['registry.access.redhat/com']
 # openshift_ca_host: '{{ groups.masters.0 }}'
 # glusterfs_devices: '{{ (ansible_devices.keys()|sort)[1:] }}'
 # openshift_hosted_registry_storage_kind: glusterfs
