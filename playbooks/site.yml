@@ -1,4 +1,3 @@
 - import_playbook: prep_inventory.yml
 - import_playbook: foreman.yml
-- import_playbook: wait_for_provisioning.yml
 - import_playbook: nodes.yml
