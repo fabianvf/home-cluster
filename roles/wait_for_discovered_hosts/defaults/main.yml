@@ -4,6 +4,7 @@ prompt_for_hosts: yes
 number_of_hosts: 0
 host_prefix: '{{ "master" if number_of_hosts < 2 else "node" }}'
 hostname: '{{ host_prefix }}{{ number_of_hosts - 1 if number_of_hosts > 1 else ""}}'
+foreman_fqdn: foreman.example.org
 
 ping_delay: 60
 sleep: 30

@@ -14,11 +14,6 @@
     resolved_dns: '{{ resolved_dns + [item.item + " ("  + lookup("dig", item.item) + "); reachable: "  + ((item.get("state") == "started")  | string)] }}'
   with_items: '{{ hosts_accessible.results }}'
 
-- name: resolve domain names
-  set_fact:
-  with_items: '{{ groups.nodes }}'
-
-
 - name: Time to boot some hosts!
   vars:
     message: |
@@ -49,6 +44,18 @@
       ======================================================================================
   pause:
     prompt: "{{ message.split('\\n') | join('\n') }}"
+
+- name: Refresh Foreman DNS
+  delegate_to: '{{ foreman_fqdn }}'
+  block:
+    - name: Get list of foreman hosts
+      command: hammer --output yaml host list --thin yes
+      register: hammer_hosts_raw
+    - set_fact:
+        hammer_hosts: '{{ hammer_hosts_raw.stdout | from_yaml }}'
+    - name: Rebuild foreman config
+      command: hammer host rebuild-config --id {{ item.Id }}
+      with_items: '{{ hammer_hosts[1:] }}'
 
 - name: Refresh inventory from foreman
   meta: refresh_inventory
