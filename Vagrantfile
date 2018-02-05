@@ -53,7 +53,8 @@ Vagrant.configure("2") do |config|
           end
           extra_vars = {
             :number_of_hosts => nodes.length,
-            :prompt_for_hosts => false
+            :prompt_for_hosts => false,
+            :foreman_dns_forwarders => ['192.168.17.1']
           }
           run "ansible-playbook playbooks/nodes.yml -e '#{extra_vars.to_json}' -i inventory -l 'all,localhost'"
         end

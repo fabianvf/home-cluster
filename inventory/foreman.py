@@ -143,7 +143,7 @@ class ForemanInventory(object):
         results = []
         s = self._get_session()
         while True:
-            ret = s.get(url, params={'page': page, 'per_page': 250})
+            ret = s.get(url, params={'page': page, 'per_page': 250}, verify=self.foreman_ssl_verify)
             if ignore_errors and ret.status_code in ignore_errors:
                 break
             ret.raise_for_status()
@@ -358,6 +358,7 @@ class ForemanInventory(object):
                 self.inventory['_meta']['hostvars'][hostname] = {
                     'foreman': self.cache[hostname],
                     'foreman_params': self.params[hostname],
+                    'ansible_host': self.cache[hostname]['ip']
                 }
                 if self.want_facts:
                     self.inventory['_meta']['hostvars'][hostname]['foreman_facts'] = self.facts[hostname]
@@ -370,14 +371,13 @@ class ForemanInventory(object):
         try:
             # Read settings and parse CLI arguments
             if not self.read_settings():
-                print('{}')
-                return True
+                return False
             self.parse_cli_args()
             self.get_inventory()
             self._print_data()
         except Exception as e:
-            print(e, file=sys.stderr)
             print('{}')
+            raise
         return True
 
 if __name__ == '__main__':
