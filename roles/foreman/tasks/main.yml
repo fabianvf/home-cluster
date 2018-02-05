@@ -31,8 +31,9 @@
   ignore_errors: yes
 
 - name: set foreman-installer command
+  when: foreman_install_cmd is not defined
   set_fact:
-    foreman_install_cmd: |
+    foreman_install_cmd: >-
       foreman-installer
         --foreman-admin-password={{ foreman_admin_password }}
         --enable-foreman-plugin-ansible
@@ -44,9 +45,10 @@
         --foreman-proxy-dns-interface={{ foreman_dns_interface }}
         --foreman-proxy-dns-zone={{ foreman_subdomain }}
         --foreman-proxy-dns-reverse={{ foreman_proxy_dns_reverse }}
+        --foreman-proxy-dns-forwarders={{ foreman_dns_forwarders | join(' --foreman-proxy-dns-forwarders=') }}
         --foreman-proxy-foreman-base-url=https://{{ foreman_hostname }}.{{ foreman_subdomain }}
-        --foreman-proxy-plugin-discovery-install-images=true
         --foreman-proxy-bmc
+        {{ foreman_extra_args | default('')}}
 
 - name: print foreman command
   debug:
@@ -57,7 +59,7 @@
   command: "{{ foreman_install_cmd }}"
 
 - name: Install discovery images
-  shell: "wget http://downloads.theforeman.org/discovery/nightly/fdi-image-latest.tar -O - | tar x --overwrite -C /var/lib/tftpboot/boot"
+  shell: "wget http://downloads.theforeman.org/discovery/releases/latest/fdi-image-latest.tar -O - | tar x --overwrite -C /var/lib/tftpboot/boot"
 
 - name: open ports
   firewalld:
