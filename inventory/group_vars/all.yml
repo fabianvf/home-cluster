@@ -1,5 +1,6 @@
 foreman_hostname: foreman
 foreman_subdomain: example.org
+foreman_fqdn: '{{ foreman_hostname }}.{{ foreman_subdomain }}'
 foreman_provisioning_password: changeme
 foreman_admin_password: changeme
 

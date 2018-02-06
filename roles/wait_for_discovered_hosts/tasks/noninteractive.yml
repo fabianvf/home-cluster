@@ -1,0 +1,53 @@
+---
+
+- pause:
+    seconds: 30
+
+- set_fact:
+    resolved_dns: []
+    hosts_accessible:
+      results: []
+    accessible_hosts: []
+
+- name: Check if host is accessible
+  wait_for: host={{ hostvars[item].ansible_host }} port=22 timeout=30
+  register: hosts_accessible
+  failed_when: False
+  with_items: '{{ groups.nodes }}'
+
+- set_fact:
+    accessible_hosts: "{{ (hosts_accessible.results | selectattr('state', 'defined') | selectattr('state', 'equalto', 'started') | list) }}"
+
+- debug: msg="{{ accessible_hosts|length }}/{{ number_of_hosts }} report ready. {{ groups.nodes|length }} discovered in total."
+
+- name: break loop if all hosts report as accessible
+  fail:
+    msg: "{{ number_of_hosts }} reported as ready"
+  when:
+    - (accessible_hosts | length) >= number_of_hosts
+
+- set_fact:
+    resolved_dns: '{{ resolved_dns + [item.item + " ("  + hostvars[item.item].ansible_host + "); reachable: "  + ((item.get("state") == "started")  | string)] }}'
+  with_items: '{{ hosts_accessible.results }}'
+
+- debug:
+    msg: >
+      So far {{ groups.nodes | length }} hosts have been discovered
+      Nodes:
+      {{ resolved_dns | join(", ") }}
+
+- name: Refresh inventory from foreman
+  meta: refresh_inventory
+
+- name: Refresh Foreman DNS
+  delegate_to: '{{ foreman_fqdn }}'
+  when: (groups.nodes | length) >= number_of_hosts
+  block:
+    - name: Get list of foreman hosts
+      command: hammer --output yaml host list
+      register: hammer_hosts_raw
+    - set_fact:
+        hammer_hosts: '{{ hammer_hosts_raw.stdout | from_yaml }}'
+    - name: Rebuild foreman config
+      command: hammer host rebuild-config --id {{ item.Id }}
+      with_items: '{{ hammer_hosts[1:] }}'

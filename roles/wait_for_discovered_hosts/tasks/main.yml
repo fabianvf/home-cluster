@@ -8,14 +8,19 @@
     loop_control:
       loop_var: throwaway
   rescue:
-    - meta: clear_host_errors
+    - set_fact:
+        discovery_success: true
 
 - name: Time to boot some hosts! Power up your hosts and this will continue when they are ready.
   when: number_of_hosts and not prompt_for_hosts
   block:
-    - name: Wait for {{ hostname }}.{{ foreman_subdomain }} to become reachable
-      wait_for_connection:
-        delay: '{{ ping_delay }}'
-        sleep: '{{ ping_sleep }}'
-        timeout: '{{ ping_timeout }}'
-      delegate_to: '{{ hostname }}.{{ foreman_subdomain }}'
+    - include_tasks: noninteractive.yml
+      with_sequence: count=100
+      loop_control:
+        loop_var: num_iterations
+  rescue:
+    - set_fact:
+        discovery_success: true
+
+- fail: msg="Discovery failed..."
+  when: not (discovery_success|default(false))

@@ -5,7 +5,7 @@
   - name: "Wait for host up"
     local_action: wait_for
     args:
-      host: "{{ inventory_hostname }}"
+      host: "{{ ansible_host }}"
       port: 22
       state: started
       delay: 10

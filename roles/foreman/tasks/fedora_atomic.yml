@@ -158,7 +158,7 @@
 - import_tasks: create_or_update.yml
   vars:
     name: openshift-nodes
-    resource: discovery-rule
+    resource: discovery_rule
     options: |
       --enabled yes
       --hostgroup "openshift-nodes"
@@ -170,7 +170,7 @@
 - import_tasks: create_or_update.yml
   vars:
     name: openshift-master
-    resource: discovery-rule
+    resource: discovery_rule
     options: |
       --enabled yes
       --hostgroup "openshift-master"
@@ -184,7 +184,7 @@
 #   The default password to use when trying to run ansible roles.
 # discovery_auto:
 #   This will cause hosts to automatically provision themselves
-#   based on the discovery-rules present. This way we don't
+#   based on the discovery_rules present. This way we don't
 #   need to manually manage the hosts
 # global_PXELinux:
 #   We need to update the default pxelinux template that is
@@ -228,8 +228,8 @@
       value: 'true'
     - key: 'safemode_render'
       value: 'false'
-    - key: 'enable_orchestration_on_fact_import'
-      value: 'true'
+    # - key: 'enable_orchestration_on_fact_import'
+    #   value: 'true'
     - key: 'update_ip_from_built_request'
       value: 'true'
     - key: 'update_subnets_from_facts'

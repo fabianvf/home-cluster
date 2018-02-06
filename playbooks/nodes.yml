@@ -1,3 +1,6 @@
 - import_playbook: prep_inventory.yml
+- import_playbook: wait_for_provisioning.yml
+- import_playbook: etc_hosts.yml
+  when: modify_etc_hosts | default(no)
 - import_playbook: atomic.yml
 - import_playbook: openshift.yml
