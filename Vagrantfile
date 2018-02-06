@@ -6,10 +6,10 @@ Vagrant.configure("2") do |config|
   nodes = (1..(ENV["NUM_NODES"].to_i||3)).map {|i| (i == 1) ? "master.example.org" : "node#{i-1}.example.org"}
 
   config.hostmanager.enabled = true
-  config.hostmanager.manage_host = true
+  config.hostmanager.manage_host = false
   config.hostmanager.manage_guest = false
   config.hostmanager.ignore_private_ip = false
-  config.hostmanager.include_offline = true
+  config.hostmanager.include_offline = false
 
   if Vagrant.has_plugin?("vagrant-cachier")
     config.cache.scope = :box
@@ -22,6 +22,8 @@ Vagrant.configure("2") do |config|
     config.vm.define 'foreman.example.org', :primary => true do |foreman|
       foreman.vm.box = "centos/7"
       foreman.vm.hostname = 'foreman.example.org'
+      foreman.hostmanager.enabled = true
+      foreman.hostmanager.manage_host = true
       foreman.vm.network :private_network,
         :mac => "52:11:22:33:44:41",
         :ip => '192.168.17.11',
@@ -54,7 +56,7 @@ Vagrant.configure("2") do |config|
           extra_vars = {
             :number_of_hosts => nodes.length,
             :prompt_for_hosts => false,
-            :foreman_dns_forwarders => ['192.168.17.1']
+            :modify_etc_hosts => true
           }
           run "ansible-playbook playbooks/nodes.yml -e '#{extra_vars.to_json}' -i inventory -l 'all,localhost'"
         end

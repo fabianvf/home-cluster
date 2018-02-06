@@ -118,3 +118,4 @@
   fetch:
     src: /etc/puppetlabs/puppet/ssl/ca_crt.pem
     dest: '{{ foreman_cert_dest }}'
+    validate_checksum: yes

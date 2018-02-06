@@ -23,4 +23,4 @@
   gather_facts: false
   tasks:
     - name: oc login
-      command: oc login -u admin -p admin --insecure-skip-tls-verify=true https://master.{{ foreman_subdomain }}:8443
+      command: oc login -u admin -p admin --insecure-skip-tls-verify=true https://{{ groups['oo_first_master'][0] }}:8443
