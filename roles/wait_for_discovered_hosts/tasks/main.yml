@@ -1,26 +1,11 @@
 ---
 
-- name: Wait for discovered hosts (interactive)
-  when: prompt_for_hosts
+- name: Wait for discovered hosts
   block:
-  - include_tasks: prompt.yml
+  - include_tasks: hosts.yml
     with_sequence: count=100
     loop_control:
-      loop_var: throwaway
+      loop_var: num_iterations
   rescue:
-    - set_fact:
-        discovery_success: true
-
-- name: Time to boot some hosts! Power up your hosts and this will continue when they are ready.
-  when: number_of_hosts and not prompt_for_hosts
-  block:
-    - include_tasks: noninteractive.yml
-      with_sequence: count=100
-      loop_control:
-        loop_var: num_iterations
-  rescue:
-    - set_fact:
-        discovery_success: true
-
-- fail: msg="Discovery failed..."
-  when: not (discovery_success|default(false))
+  - fail: msg="Discovery failed..."
+    when: not discovery_success
