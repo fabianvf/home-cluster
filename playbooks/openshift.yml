@@ -25,3 +25,8 @@
   tasks:
     - name: oc login
       command: oc login -u admin -p admin --insecure-skip-tls-verify=true https://{{ groups['oo_first_master'][0] }}:8443
+
+- hosts: nodes
+  gather_facts: false
+  roles:
+    - reboot
