@@ -1,9 +1,10 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+
 Vagrant.configure("2") do |config|
 
-  nodes = (1..(ENV["NUM_NODES"].to_i||3)).map {|i| (i == 1) ? "master.example.org" : "node#{i-1}.example.org"}
+  nodes = (1..(ENV["NUM_NODES"]||3).to_i).map {|i| (i == 1) ? "master.example.org" : "node#{i-1}.example.org"}
   verbosity = ENV["VERBOSITY"]||""
 
   config.hostmanager.enabled = true
@@ -48,7 +49,7 @@ Vagrant.configure("2") do |config|
         ansible.extra_vars = {"foreman_dns_interface": "eth1"}
       end
 
-      if Vagrant.has_plugin?("vagrant-triggers")
+      if Vagrant.has_plugin?("vagrant-triggers") and nodes.length > 0
         config.trigger.after [:provision, :up] do
           nodes.each do |node|
             run "vagrant up #{node}"

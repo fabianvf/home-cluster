@@ -6,10 +6,6 @@
   poll: 0
 
 - name: "Wait for reboot"
-  local_action: wait_for
-  args:
-    host: "{{ inventory_hostname }}"
-    port: 22
-    state: started
+  wait_for_connection:
     delay: 60
     timeout: 3600
