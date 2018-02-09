@@ -60,7 +60,7 @@ EOF
 bootloader --timeout=3 --append="ds=nocloud\;seedfrom=/var/cloud-init/"
 text
 
-ostreesetup --nogpg --osname="fedora-atomic" --remote="fedora-atomic-{{ fedora_version }}" --url="http://{{ foreman_hostname}}.{{ foreman_subdomain }}/atomic" --ref="fedora/{{ fedora_version }}/x86_64/atomic-host"
+ostreesetup --nogpg --osname="fedora-atomic" --remote="fedora-atomic-{{ fedora_version }}" --url="http://{{ foreman_hostname}}.{{ foreman_subdomain }}/atomic" --ref="fedora/{{ fedora_version }}/x86_64/testing/atomic-host"
 
 services --enabled cloud-init,cloud-config,cloud-final,cloud-init-local,sshd,docker
 rootpw --iscrypted <%= root_pass %>
