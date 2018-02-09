@@ -11,8 +11,8 @@ My wife is a photographer, and generates between 1TB and 3TB of media per year. 
 - [x] Sync Fedora Atomic images to Foreman
 - [x] Provision nodes with Fedora Atomic
 - [x] Deployment of Openshift Origin
-- [ ] Deployment of Heketi and gluster
-  - [ ] Configuration of gluster for dynamic persistent volume provisioning
+- [x] Deployment of Heketi and gluster
+  - [x] Configuration of gluster for dynamic persistent volume provisioning
 - [ ] Deployment and configuration of various services (feel free to add PRs to expand this list, it's a wishlist)
   - [ ] [Seafile](https://www.seafile.com/en/home/) 
     - [Containerized: yes](https://github.com/haiwen/seafile-docker) (just not built yet) (official)
@@ -67,43 +67,36 @@ git clone https://github.com/openshift/openshift-ansible /usr/share/ansible/open
 ```
 
 ## Virtual environment
-To test out this environment, I recommend using the vagrant environment defined in the `vagrant` directory.
+To test out this environment, I recommend using the vagrant environment defined in the top-level `Vagrantfile`.
 
 _Note: I'm running Fedora 26 and have not tested anything out on any other OS. Also,
 this environment only supports libvirt. I would love to support virtualbox as well,
 so if you know anything about virtualbox, making this work with both would be awesome._
 
 You will need the additional dependencies of libvirt,
-and the vagrant-libvirt, vagrant-hostmanager, and vagrant-rsync-back vagrant plugins.
+and the vagrant-libvirt, vagrant-hostmanager, and vagrant-triggers vagrant plugins.
 
 ```bash
 <package manager> install -y libvirt
 vagrant plugin install vagrant-libvirt
 vagrant plugin install vagrant-hostmanager
-vagrant plugin install vagrant-rsync
+vagrant plugin install vagrant-triggers
 ```
 
-### Foreman
-
-Once you have the dependencies, then for an easy setup you can just run (from inside the vagrant directory):
+Once you have the dependencies, then for an easy setup you can just run (from the top-level):
 
 ```bash
-./run.sh
+vagrant up
 ```
 
-You may need authenticate as root a few times for the libvirt networking config to take effect. This script will set up your libvirt network for network booting, bring up the vagrant machine, and set up foreman.
+There are a few environment variables that can be set to alter the behavior of the virtual environment:
 
-If you hate the idea of running a script written by a random person that messes with your networking and libvirt environment, or if the script just doesn't work for you, then just open it up and run through the steps by hand, adjusting as needed for your environment. Feel free to open up an issue or pop into the IRC channel if you have any trouble.
+name|description
+-----------------
+NUM_NODES | number of openshift nodes to bring up
+VERBOSITY | verbosity level to run Ansible (ie, `v`, `vv`, `vvv`)
+ONLY_NODES | makes the commands only affect the node vms, ie `ONLY_NODES vagrant destroy` would tear down all the nodes but leave your foreman instance up
 
-
-### Nodes
-After you've set up the foreman box, just run:
-
-```bash
-sudo ./launch_node.sh
-```
-
-to bring up a new node that will register to foreman and automatically be provisioned with Fedora Atomic. You can run this script as many times as you want until you have the desired number of openshift nodes.
 
 ## Bare Metal
 
@@ -112,9 +105,9 @@ For deployment onto physical hosts or external VMs (ie anything that isn't the a
 ### Hardware
 - 1 server that will host Foreman.
     - The Foreman ansible roles assume that CentOS 7 is installed on this machine, use anything else at your own risk
-- N servers that will serve as openshift nodes.
+- N >= 3 servers that will serve as openshift nodes.
     - These servers will need to be configured to network boot. Most vendors provide these settings in the BIOS screen.
-    - At least one of your nodes will need to have > 1 disks, so that it can be tagged and used as a gluster storage host.
+    - At least three of your nodes will need to have > 1 disks, so that it can be tagged and used as a gluster storage host.
 
 ### Networking
 - Foreman needs a static IP + hostname
