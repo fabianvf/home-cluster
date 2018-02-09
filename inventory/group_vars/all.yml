@@ -1,6 +1,10 @@
 foreman_hostname: foreman
 foreman_subdomain: example.org
 foreman_fqdn: '{{ foreman_hostname }}.{{ foreman_subdomain }}'
+
+__foreman_ip_lookup_cmd: "getent hosts {{ foreman_fqdn|quote }} | awk '{print $1}'"
+foreman_ip: '{{ lookup("pipe", __foreman_ip_lookup_cmd) or lookup("dig", foreman_fqdn) }}'
+
 foreman_provisioning_password: changeme
 foreman_admin_password: changeme
 

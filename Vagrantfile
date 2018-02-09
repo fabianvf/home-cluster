@@ -4,6 +4,7 @@
 Vagrant.configure("2") do |config|
 
   nodes = (1..(ENV["NUM_NODES"].to_i||3)).map {|i| (i == 1) ? "master.example.org" : "node#{i-1}.example.org"}
+  verbosity = ENV["VERBOSITY"]||""
 
   config.hostmanager.enabled = true
   config.hostmanager.manage_host = false
@@ -39,7 +40,7 @@ Vagrant.configure("2") do |config|
       foreman.vm.provision :shell, :inline => "cat /tmp/key >> /home/vagrant/.ssh/authorized_keys;  mkdir -p /root/.ssh ; cp /home/vagrant/.ssh/authorized_keys /root/.ssh/authorized_keys"
 
       foreman.vm.provision :ansible do |ansible|
-        # ansible.verbose = 'vv'
+        ansible.verbose = verbosity
         ansible.playbook = 'playbooks/foreman.yml'
         ansible.become = true
         ansible.limit = 'all,localhost'
@@ -56,9 +57,10 @@ Vagrant.configure("2") do |config|
           extra_vars = {
             :number_of_hosts => nodes.length,
             :prompt_for_hosts => false,
-            :modify_etc_hosts => true
+            :modify_etc_hosts => true,
+            :glusterfs_wipe => true
           }
-          run "ansible-playbook playbooks/nodes.yml -e '#{extra_vars.to_json}' -i inventory -l 'all,localhost'"
+          run "ansible-playbook playbooks/nodes.yml -e '#{extra_vars.to_json}' -i inventory -l 'all,localhost' #{verbosity == '' ? '' : '-' + verbosity}"
         end
       end
     end
@@ -71,7 +73,8 @@ Vagrant.configure("2") do |config|
       node.vm.hostname = name
 
       node.vm.provider :libvirt do |domain|
-        domain.storage :file, :size => '80G', :type => 'qcow2'
+        domain.storage :file, :size => '80G', :type => 'raw'
+        domain.storage :file, :size => '40G', :type => 'raw'
         domain.mgmt_attach = 'false'
         domain.management_network_name = 'home-cluster'
         domain.management_network_address = "192.168.17.0/24"

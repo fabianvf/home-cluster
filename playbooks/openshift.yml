@@ -9,6 +9,7 @@
     - fail: msg="No master registered to foreman"
       when: groups['masters'] | length == 0
 
+- import_playbook: prep_devices.yml
 - import_playbook: '{{ openshift_ansible_dir|default("/usr/share/ansible/openshift-ansible") }}/playbooks/prerequisites.yml'
 - import_playbook: '{{ openshift_ansible_dir|default("/usr/share/ansible/openshift-ansible") }}/playbooks/deploy_cluster.yml'
 
@@ -24,3 +25,8 @@
   tasks:
     - name: oc login
       command: oc login -u admin -p admin --insecure-skip-tls-verify=true https://{{ groups['oo_first_master'][0] }}:8443
+
+- hosts: nodes
+  gather_facts: false
+  roles:
+    - reboot
