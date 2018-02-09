@@ -1,0 +1,32 @@
+---
+
+- hosts: localhost
+  connection: local
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Add all the nodes to local /etc/hosts
+      lineinfile:
+        dest: /etc/hosts
+        regexp: '.* {{ item }}'
+        line: '{{ hostvars[item].ansible_host }} {{ item }}'
+      with_items: '{{ groups.nodes }}'
+      when: modify_etc_hosts | default(false)
+
+- hosts: nodes
+  become: true
+  gather_facts: false
+  tasks:
+    - when: hardcode_foreman_dns | default(true)
+      block:
+        - name: Create foreman dnsmasq entry
+          copy:
+            content: server=/{{ foreman_subdomain }}/{{ foreman_ip }}
+            dest: /etc/dnsmasq.d/foreman-dns.conf
+        - name: Restart services
+          service:
+            name: '{{ item }}'
+            state: restarted
+          with_items:
+            - NetworkManager
+            - dnsmasq

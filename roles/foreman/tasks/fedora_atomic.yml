@@ -1,5 +1,7 @@
 ---
 
+- import_tasks: fedora_version_facts.yml
+
 - name: make template dir
   file:
     path: /tmp/templates/

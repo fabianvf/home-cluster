@@ -9,30 +9,7 @@
     - fail: msg="No master registered to foreman"
       when: groups['masters'] | length == 0
 
-- name: Set devices to be configured for gluster on each node
-  hosts: nodes
-  vars:
-    __glusterfs_devices: []
-  tasks:
-    - name: Generate list of devices if it does not already exist
-      when: glusterfs_devices is not defined
-      block:
-      - set_fact:
-          __glusterfs_devices: '{{ __glusterfs_devices + ["/dev/" + item.key] }}'
-        with_dict: '{{ ansible_devices }}'
-        when:
-          - item.key.startswith('sd') or item.key.startswith('vd')
-          - not item.key.endswith('a')
-      - set_fact:
-          glusterfs_devices: '{{ glusterfs_devices | default(__glusterfs_devices) }}'
-
-    - command: wipefs {{ item }} --all --force
-      with_items: '{{ glusterfs_devices }}'
-      when: glusterfs_wipe is defined and glusterfs_wipe
-
-    - debug:
-        msg: "openshift-ansible will attempt to configure the following devices for gluster: {{ glusterfs_devices }}"
-
+- import_playbook: prep_devices.yml
 - import_playbook: '{{ openshift_ansible_dir|default("/usr/share/ansible/openshift-ansible") }}/playbooks/prerequisites.yml'
 - import_playbook: '{{ openshift_ansible_dir|default("/usr/share/ansible/openshift-ansible") }}/playbooks/deploy_cluster.yml'
 
