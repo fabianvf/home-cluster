@@ -8,7 +8,7 @@
     - name: Add all the nodes to local /etc/hosts
       lineinfile:
         dest: /etc/hosts
-        regexp: '.* {{ item }}'
+        regexp: '.*{{ item }}'
         line: '{{ hostvars[item].ansible_host }} {{ item }}'
       with_items: '{{ groups.nodes }}'
       when: modify_etc_hosts | default(false)
