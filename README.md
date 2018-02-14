@@ -91,11 +91,11 @@ vagrant up
 
 There are a few environment variables that can be set to alter the behavior of the virtual environment:
 
-name|description
------------------
-NUM_NODES | number of openshift nodes to bring up
-VERBOSITY | verbosity level to run Ansible (ie, `v`, `vv`, `vvv`)
-ONLY_NODES | makes the commands only affect the node vms, ie `ONLY_NODES vagrant destroy` would tear down all the nodes but leave your foreman instance up
+| name | description |
+|------|-------------|
+|NUM_NODES | number of openshift nodes to bring up|
+|ONLY_NODES | makes the commands only affect the node vms, ie `ONLY_NODES vagrant destroy` would tear down all the nodes but leave your foreman instance up|
+|VERBOSITY | verbosity level to run Ansible (ie, `v`, `vv`, `vvv`)|
 
 
 ## Bare Metal
