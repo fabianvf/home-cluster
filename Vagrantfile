@@ -20,49 +20,47 @@ Vagrant.configure("2") do |config|
     }
   end
 
-  if !ENV['ONLY_NODES']
-    config.vm.define 'foreman.example.org', :primary => true do |foreman|
-      foreman.vm.box = "centos/7"
-      foreman.vm.hostname = 'foreman.example.org'
-      foreman.hostmanager.enabled = true
-      foreman.hostmanager.manage_host = true
-      foreman.vm.network :private_network,
-        :mac => "52:11:22:33:44:41",
-        :ip => '192.168.17.11',
-        :libvirt__network_name => "home-cluster",
-        :libvirt__dhcp_enabled => true,
-        :libvirt__netmask => "255.255.255.0",
-        :libvirt__dhcp_bootp_file => "pxelinux.0",
-        :libvirt__dhcp_bootp_server => "192.168.17.11"
+  config.vm.define 'matchbox.example.org', :primary => true do |matchbox|
+    matchbox.vm.box = "fedora/27-atomic-host"
+    matchbox.vm.hostname = 'matchbox.example.org'
+    matchbox.hostmanager.enabled = true
+    matchbox.hostmanager.manage_host = true
+    matchbox.vm.network :private_network,
+      :mac => "52:11:22:33:44:41",
+      :ip => '192.168.17.11',
+      :libvirt__network_name => "home-cluster",
+      :libvirt__dhcp_enabled => true,
+      :libvirt__netmask => "255.255.255.0",
+      :libvirt__dhcp_bootp_file => "http://192.168.17.11:8080/boot.ipxe"
+      # :libvirt__dhcp_bootp_server => "192.168.17.11",
 
-      foreman.vm.synced_folder '.', '/vagrant', disabled: true
+    matchbox.vm.synced_folder '.', '/vagrant', disabled: true
 
-      foreman.vm.provision :file, :source => "~/.ssh/id_rsa.pub", :destination => "/tmp/key"
-      foreman.vm.provision :shell, :inline => "cat /tmp/key >> /home/vagrant/.ssh/authorized_keys;  mkdir -p /root/.ssh ; cp /home/vagrant/.ssh/authorized_keys /root/.ssh/authorized_keys"
+    matchbox.vm.provision :file, :source => "~/.ssh/id_rsa.pub", :destination => "/tmp/key"
+    matchbox.vm.provision :shell, :inline => "cat /tmp/key >> /home/vagrant/.ssh/authorized_keys;  mkdir -p /root/.ssh ; cp /home/vagrant/.ssh/authorized_keys /root/.ssh/authorized_keys"
 
-      foreman.vm.provision :ansible do |ansible|
-        ansible.verbose = verbosity
-        ansible.playbook = 'playbooks/foreman.yml'
-        ansible.become = true
-        ansible.limit = 'all,localhost'
-        ansible.inventory_path = './inventory'
-        ansible.extra_vars = {"foreman_dns_interface": "eth1"}
-      end
+    matchbox.vm.provision :ansible do |ansible|
+      ansible.verbose = verbosity
+      ansible.playbook = 'playbooks/matchbox.yml'
+      ansible.become = true
+      ansible.limit = 'all,localhost'
+      ansible.inventory_path = './inventory'
+      ansible.extra_vars = {"foreman_hostname": "matchbox", "matchbox_dns_interface": "eth1"}
+    end
 
-      if Vagrant.has_plugin?("vagrant-triggers") and nodes.length > 0
-        config.trigger.after [:provision, :up] do
-          nodes.each do |node|
-            run "vagrant up #{node}"
-            sleep 10
-          end
-          extra_vars = {
-            :number_of_hosts => nodes.length,
-            :prompt_for_hosts => false,
-            :modify_etc_hosts => true,
-            :glusterfs_wipe => true
-          }
-          run "ansible-playbook playbooks/nodes.yml -e '#{extra_vars.to_json}' -i inventory -l 'all,localhost' #{verbosity == '' ? '' : '-' + verbosity}"
+    if Vagrant.has_plugin?("vagrant-triggers") and nodes.length > 0
+      config.trigger.after [:provision, :up] do
+        nodes.each do |node|
+          run "vagrant up #{node}"
+          sleep 10
         end
+        extra_vars = {
+          :number_of_hosts => nodes.length,
+          :prompt_for_hosts => false,
+          :modify_etc_hosts => true,
+          :glusterfs_wipe => true
+        }
+        # run "ansible-playbook playbooks/nodes.yml -e '#{extra_vars.to_json}' -i inventory -l 'all,localhost' #{verbosity == '' ? '' : '-' + verbosity}"
       end
     end
   end

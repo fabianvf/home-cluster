@@ -28,7 +28,7 @@
   - name: Template hosts
     copy:
       content: |
-          [foreman]
+          [matchbox]
           {{ foreman_hostname }}.{{ foreman_subdomain }}
 
           [masters:children]
