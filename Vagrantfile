@@ -8,8 +8,6 @@ Vagrant.configure("2") do |config|
   verbosity = ENV["VERBOSITY"]||""
 
   config.hostmanager.enabled = true
-  config.hostmanager.manage_host = false
-  config.hostmanager.manage_guest = false
   config.hostmanager.ignore_private_ip = false
   config.hostmanager.include_offline = false
 
@@ -24,12 +22,12 @@ Vagrant.configure("2") do |config|
     config.vm.define 'foreman.example.org', :primary => true do |foreman|
       foreman.vm.box = "centos/7"
       foreman.vm.hostname = 'foreman.example.org'
-      foreman.hostmanager.enabled = true
       foreman.hostmanager.manage_host = true
       foreman.vm.network :private_network,
         :mac => "52:11:22:33:44:41",
         :ip => '192.168.17.11',
         :libvirt__network_name => "home-cluster",
+        :libvirt__domain_name => "example.org",
         :libvirt__dhcp_enabled => true,
         :libvirt__netmask => "255.255.255.0",
         :libvirt__dhcp_bootp_file => "pxelinux.0",
@@ -41,12 +39,15 @@ Vagrant.configure("2") do |config|
       foreman.vm.provision :shell, :inline => "cat /tmp/key >> /home/vagrant/.ssh/authorized_keys;  mkdir -p /root/.ssh ; cp /home/vagrant/.ssh/authorized_keys /root/.ssh/authorized_keys"
 
       foreman.vm.provision :ansible do |ansible|
+        ansible.host_vars = {
+          'foreman.example.org' => {"foreman_dns_interface": "eth1"}
+        }
         ansible.verbose = verbosity
         ansible.playbook = 'playbooks/foreman.yml'
         ansible.become = true
         ansible.limit = 'all,localhost'
         ansible.inventory_path = './inventory'
-        ansible.extra_vars = {"foreman_dns_interface": "eth1"}
+        ansible.extra_vars = 'vagrant.config.yml' if File.file? 'vagrant.config.yml'
       end
 
       if Vagrant.has_plugin?("vagrant-triggers") and nodes.length > 0
@@ -61,9 +62,10 @@ Vagrant.configure("2") do |config|
             :modify_etc_hosts => true,
             :glusterfs_wipe => true
           }
-          run "ansible-playbook playbooks/nodes.yml -e '#{extra_vars.to_json}' -i inventory -l 'all,localhost' #{verbosity == '' ? '' : '-' + verbosity}"
+          run "ansible-playbook playbooks/nodes.yml -e '#{extra_vars.to_json}' #{ File.file?('vagrant.config.yml') ? '-e @vagrant.config.yml' : ''} -i inventory -l 'all,localhost' #{verbosity == '' ? '' : '-' + verbosity}"
         end
       end
+
     end
   end
 

@@ -17,9 +17,10 @@
   with_items:
     - epel-release
     - "https://yum.puppetlabs.com/puppetlabs-release-pc1-el-7.noarch.rpm"
-    - "https://yum.theforeman.org/releases/latest/el7/x86_64/foreman-release.rpm"
-    - foreman-release-scl
+    - "https://yum.puppetlabs.com/puppet5/puppet5-release-el-7.noarch.rpm"
+    - "https://yum.theforeman.org/releases/1.17/el7/x86_64/foreman-release.rpm"
     - foreman-installer
+    - foreman-release-scl
     - tfm-rubygem-hammer_cli_foreman_discovery
     - python-dns
 
