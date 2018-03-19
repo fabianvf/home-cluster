@@ -1,0 +1,139 @@
+---
+- name: create necessary directories
+  file:
+    path: '{{ item }}'
+    state: directory
+  with_items:
+    - /etc/matchbox
+    - /var/lib/matchbox
+    - /var/lib/matchbox/assets
+    - /var/lib/matchbox/groups
+    - /var/lib/matchbox/profiles
+    - /var/lib/matchbox/ignition
+
+- name: get matchbox download URL
+  uri:
+    url: https://api.github.com/repos/coreos/matchbox/releases/latest
+    user: '{{ github_user }}'
+    password: '{{ github_password }}'
+    force_basic_auth: yes
+    return_content: true
+  register: releases
+
+- set_fact:
+    matchbox_download_url: '{{ download_url }}'
+    matchbox_version: "{{ download_url.split('/')[-1] | replace('.tar.gz', '') }}"
+  vars:
+    download_url: "{{ (releases.json | json_query('assets[].browser_download_url') | select('match', '.*linux-amd64.tar.gz$') | list)[0] }}"
+
+- name: Download matchbox {{ matchbox_version }}
+  unarchive:
+    src: '{{ matchbox_download_url }}'
+    dest: /tmp/
+    remote_src: yes
+    creates: /tmp/{{ matchbox_version }}
+
+- name: generate certificates
+  command: ./cert-gen chdir=/tmp/{{ matchbox_version }}/scripts/tls
+  environment:
+    SAN: 'DNS.1:{{ matchbox_host }},IP.1:{{ matchbox_ip }}'
+  args:
+    creates: /tmp/{{ matchbox_version }}/scripts/tls/ca.crt
+
+- name: copy certificates to matchbox directory
+  copy:
+    src: /tmp/{{ matchbox_version }}/scripts/tls/{{ item }}
+    dest: /etc/matchbox/{{ item }}
+    remote_src: yes
+  with_items:
+    - ca.crt
+    - server.crt
+    - server.key
+
+- name: download coreos
+  command: ./scripts/get-coreos
+  args: 
+    chdir: /tmp/{{ matchbox_version }}/
+    creates: /tmp/{{ matchbox_version }}/examples/assets/coreos
+
+- name: copy coreos to matchbox assets
+  command: cp -r /tmp/{{ matchbox_version }}/examples/assets/coreos /var/lib/matchbox/assets
+
+- name: get coreos version
+  command: ls /var/lib/matchbox/assets/coreos
+  register: coreos_version_result
+
+- set_fact:
+    coreos_version: '{{ coreos_version_result.stdout_lines.0 }}'
+
+- name: copy groups/profiles/ignition configs
+  template:
+    src: '{{ item }}'
+    dest: /var/lib/matchbox/{{ item.split('/')[-1].split('_') | join('/') }}
+  with_fileglob:
+    - 'templates/*'
+
+- name: start firewalld
+  service:
+    name: firewalld
+    state: started
+    enabled: yes
+  register: firewalld_started
+  ignore_errors: true
+
+- name: open ports
+  firewalld:
+    service: '{{ item }}'
+    state: enabled
+    permanent: true
+    immediate: true
+  with_items:
+    - dhcp
+    - tftp
+    - dns
+  when: not firewalld_started | failed
+
+- name: open ports
+  firewalld:
+    port: '{{ item }}/tcp'
+    state: enabled
+    permanent: true
+    immediate: true
+  with_items:
+    - '{{ matchbox_port }}'
+    - '{{ matchbox_grpc_port }}'
+  when: not firewalld_started | failed
+
+- name: setup tftp/dns
+  docker_container:
+    name: matchbox_dns
+    image: quay.io/coreos/dnsmasq
+    auto_remove: no
+    capabilities:
+      - 'NET_ADMIN'
+    network_mode: host
+    command:
+      - '-d'
+      - '-q'
+      - '--host-record={{ matchbox_host }},{{ matchbox_ip }}'
+      - '--dhcp-range={{ matchbox_subnet }},proxy,255.255.255.0'
+      - '--enable-tftp'
+      - '--tftp-root=/var/lib/tftpboot'
+      - '--dhcp-userclass=set:ipxe,iPXE'
+      - '--pxe-service=tag:#ipxe,x86PC,"PXE chainload to iPXE",undionly.kpxe'
+      - '--pxe-service=tag:ipxe,x86PC,"iPXE",http://{{ matchbox_ip }}:{{ matchbox_port }}/boot.ipxe'
+      - '--log-queries'
+      - '--log-dhcp'
+
+- name: run matchbox
+  docker_container:
+    name: matchbox
+    image: quay.io/coreos/matchbox:latest
+    command:
+      - '-address=0.0.0.0:{{ matchbox_port }}'
+      - '-log-level=debug'
+    auto_remove: no
+    network_mode: host
+    volumes:
+      - /var/lib/matchbox:/var/lib/matchbox:Z
+      - /etc/matchbox:/etc/matchbox:Z,ro

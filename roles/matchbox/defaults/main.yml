@@ -1,0 +1,12 @@
+---
+
+authorized_keys: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+
+coreos_install_device: 'sda'
+
+github_user: null
+github_password: null
+
+matchbox_port: 8080
+matchbox_grpc_port: 8081
+

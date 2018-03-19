@@ -1,0 +1,10 @@
+ansible_python_interpreter: '/root/installer/bin/python'
+ansible_ssh_user: root
+
+authorized_keys: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+
+matchbox_dns_interface: "{{ ansible_default_ipv4.interface }}"
+matchbox_network_facts: "{{ vars['ansible_' + matchbox_dns_interface] }}"
+matchbox_ip: "{{ matchbox_network_facts.ipv4.address }}"
+matchbox_subnet: "{{ matchbox_network_facts.ipv4.network }}"
+matchbox_proxy_dns_reverse: "{{ (matchbox_subnet | ipaddr('revdns'))[2:-1] }}"

@@ -1,0 +1,69 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+
+Vagrant.configure("2") do |config|
+
+  nodes = (1..(ENV["NUM_NODES"]||3).to_i).map { |i| "node#{i-1}.example.net"}
+  verbosity = ENV["VERBOSITY"]||""
+
+  config.hostmanager.enabled = true
+  config.hostmanager.ignore_private_ip = false
+  config.hostmanager.include_offline = false
+
+  if Vagrant.has_plugin?("vagrant-cachier")
+    config.cache.scope = :box
+    config.cache.synced_folder_opts = {
+      type: 'rsync',
+    }
+  end
+
+  config.vm.define 'master.example.net' do |master|
+    master.vm.box = "dongsupark/coreos-stable"
+    master.vm.hostname = 'master.example.net'
+    master.hostmanager.manage_host = true
+    master.hostmanager.manage_guest = false
+    master.vm.network :private_network,
+      :mac => "52:11:22:33:44:41",
+      :ip => '192.168.47.11',
+      :libvirt__network_name => "coreos-cluster",
+      :libvirt__domain_name => "example.net",
+      :libvirt__dhcp_enabled => true,
+      :libvirt__netmask => "255.255.255.0",
+      :libvirt__dhcp_bootp_file => "undionly.kpxe",
+      :libvirt__dhcp_bootp_server => "192.168.47.11"
+
+    master.vm.synced_folder '.', '/vagrant', disabled: true
+
+    master.vm.provision :file, :source => "~/.ssh/id_rsa.pub", :destination => "/tmp/key"
+    master.vm.provision :shell, :inline => "cat /tmp/key >> /home/core/.ssh/authorized_keys;  mkdir -p /root/.ssh ; cp /home/core/.ssh/authorized_keys /root/.ssh/authorized_keys"
+    master.vm.provision :shell, :inline => "update_engine_client -update && shutdown -r now"
+  end
+
+
+  nodes.each do |name|
+    config.vm.define name, :autostart => false do |node|
+      node.hostmanager.manage_guest = true
+      node.hostmanager.manage_host = false
+      node.vm.hostname = name
+
+      node.vm.provider :libvirt do |domain|
+        domain.storage :file, :size => '80G', :type => 'raw'
+        domain.storage :file, :size => '40G', :type => 'raw'
+        domain.mgmt_attach = 'false'
+        domain.management_network_name = 'coreos-cluster'
+        domain.management_network_address = "192.168.47.0/24"
+        domain.management_network_mode = "nat"
+        domain.boot 'hd'
+        domain.boot 'network'
+      end
+    end
+  end
+
+
+  config.vm.provider :libvirt do |libvirt|
+    libvirt.driver = "kvm"
+    libvirt.memory = 4000
+    libvirt.cpus = `grep -c ^processor /proc/cpuinfo`.to_i
+  end
+end

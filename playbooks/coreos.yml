@@ -1,0 +1,25 @@
+- hosts: matchbox
+  gather_facts: false
+  tasks:
+    - name: Check if bootstrap is needed
+      raw: stat /root/.bootstrapped
+      register: need_bootstrap
+      ignore_errors: true
+      changed_when: false
+
+    - when: need_bootstrap|failed
+      block:
+        - name: Get pypy archive
+          raw: wget -O /tmp/pypy.tar.bz2 https://bitbucket.org/squeaky/portable-pypy/downloads/pypy3.5-5.10.1-linux_x86_64-portable.tar.bz2 --no-check-certificate --no-dns-cache -4
+
+        - name: unpack pypy archive
+          raw: mkdir /root/pypy ; tar -xjf /tmp/pypy.tar.bz2 -C /root/pypy --strip-components 1
+
+        - name: create installer virtual environment
+          raw: /root/pypy/bin/pypy /root/pypy/bin/virtualenv-pypy installer
+
+        - name: Install python prereqs
+          command: /root/installer/bin/pip install -U docker-py
+
+        - name: set bootstrap
+          raw: touch /root/.bootstrapped
