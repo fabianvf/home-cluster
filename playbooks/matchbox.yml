@@ -1,11 +1,17 @@
 ---
 
 - import_playbook: prep_inventory.yml
-- import_playbook: coreos.yml
 
 - hosts: matchbox
-  pre_tasks:
-    - wait_for_connection:
-        timeout: 300
-  roles:
-    - matchbox
+  gather_facts: false
+  tasks:
+    - name: Wait for server to become available
+      local_action:
+        module: wait_for
+          host={{ inventory_hostname }}
+          port=22
+    - import_role:
+        name: coreos
+    - setup:
+    - import_role:
+        name: matchbox

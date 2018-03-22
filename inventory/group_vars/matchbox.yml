@@ -3,6 +3,7 @@ ansible_ssh_user: root
 
 authorized_keys: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
 
+matchbox_host: "{{ inventory_hostname }}"
 matchbox_dns_interface: "{{ ansible_default_ipv4.interface }}"
 matchbox_network_facts: "{{ vars['ansible_' + matchbox_dns_interface] }}"
 matchbox_ip: "{{ matchbox_network_facts.ipv4.address }}"
