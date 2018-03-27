@@ -1,0 +1,80 @@
+---
+
+- name: Install dependencies
+  yum:
+    name: '{{ item }}'
+    state: latest
+  with_items:
+    - git
+    - docker
+    - ansible
+    - python-docker-py
+    - python2-ansible-tower-cli
+
+- name: start docker service
+  service:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: clone awx repo
+  git:
+    repo: https://github.com/ansible/awx.git
+    dest: /usr/share/awx_installer
+
+- name: template inventory file
+  copy:
+    content: |
+      localhost ansible_connection=local ansible_python_interpreter="/usr/bin/env python"
+
+      [all:vars]
+
+      dockerhub_base=ansible
+      dockerhub_version=latest
+
+      awx_secret_key=awxsecret
+
+      host_port=8080
+
+      # pg_hostname=localhost
+      pg_username=awx
+      pg_password='{{ awx_db_password | default("changeme") }}'
+      pg_database=awx
+      pg_port=5432
+      postgres_data_dir=/etc/ansible/awx_data
+
+      awx_alternate_dns_servers="{{ foreman_ip }}"
+    dest: /etc/ansible/awx_inventory
+
+- name: run awx installer
+  command: ansible-playbook -i /etc/ansible/awx_inventory /usr/share/awx_installer/installer/install.yml
+
+- name: make template dir
+  file:
+    path: /tmp/templates
+    state: directory
+    mode: 0777
+
+- name: Copy templates
+  template:
+    src: "{{ item }}"
+    dest: "/tmp/templates/{{ item.split('/')[-1] }}"
+  with_fileglob:
+    - 'templates/*'
+
+- name: Template tower-cli config
+  copy:
+    content: |
+      [general]
+      verify_ssl = false
+      host = http://127.0.0.1:8080
+      username = admin
+      password = password
+    dest: /root/.tower_cli.cfg
+
+- name: Create resources
+  command: tower-cli {{ item.resource }} create {{ item.content }}
+  with_items:
+    - {resource: organization, content: '-n home-cluster'}
+    - {resource: project, content: '-n home-cluster --organization home-cluster --scm-type git --scm-url https://github.com/fabianvf/home-cluster.git --wait'}
+    # - {resource: inventory, content: '-n home_cluster_hosts --organization home-cluster --variables @/tmp/templates/home_cluster_hosts'}

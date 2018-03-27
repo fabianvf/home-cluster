@@ -1,0 +1,35 @@
+---
+
+foreman:
+  hosts:
+    {{ foreman_hostname }}.{{ foreman_subdomain }}:
+
+awx:
+  children:
+    foreman:
+
+masters:
+  children:
+    foreman_hostgroup_openshift_nodes_openshift_master:
+
+etcd:
+  children:
+    masters:
+
+foreman_hostgroup_openshift_nodes_openshift_master:
+
+nodes:
+  children:
+    foreman_hostgroup_openshift_nodes:
+    masters:
+
+foreman_hostgroup_openshift_nodes:
+
+OSEv3:
+  children:
+    masters:
+    nodes:
+
+glusterfs:
+  children:
+    nodes:

@@ -1,2 +1,7 @@
+---
+
 - import_playbook: prep_inventory.yml
-- import_playbook: nodes.yml
+
+- hosts: awx
+  roles:
+    - awx
