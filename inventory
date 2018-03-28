@@ -1,0 +1,2 @@
+[first_master]
+master.example.org ansible_ssh_user=root

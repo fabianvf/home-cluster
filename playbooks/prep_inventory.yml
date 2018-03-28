@@ -1,15 +1,12 @@
 - name: Prepare inventory
-  hosts: ansible_runner
+  hosts: localhost
   gather_facts: no
   tasks:
   - name: Template hosts
     copy:
       content: |
-          [awx]
-          {{ master_host }}
-
-          [masters:children]
-          {{ master_host }}
+          [masters]
+          {{ groups.first_master.0 }}
 
           [etcd:children]
           masters
@@ -20,13 +17,5 @@
           [OSEv3:children]
           masters
           nodes
-
-          [glusterfs:children]
-          nodes
-      dest: '{{ inventory_dir}}/home_cluster_hosts'
+      dest: '{{ inventory_dir | default(ansible_inventory_sources[0] | dirname) }}/awx_inventory/hosts'
     run_once: yes
-
-  - meta: refresh_inventory
-
-  - debug:
-      var: groups.all

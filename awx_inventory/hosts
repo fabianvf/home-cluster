@@ -1,0 +1,12 @@
+[masters]
+master.example.org
+
+[etcd:children]
+masters
+
+[nodes:children]
+masters
+
+[OSEv3:children]
+masters
+nodes

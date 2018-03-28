@@ -1,0 +1,39 @@
+---
+
+- import_playbook: prep_inventory.yml
+
+- hosts: localhost
+  vars:
+    openshift_installer_image_org: openshift
+    openshift_installer_image_tag: v3.9
+  tasks:
+    - name: Get ID of current user
+      command: id -u
+      register: user_id
+      changed_when: false
+
+    - name: restart docker
+      service:
+        name: docker
+        state: restarted
+
+    - name: Install single node openshift
+      docker_container:
+        name: openshift-ansible
+        image: '{{ openshift_installer_image_org }}/origin-ansible:{{ openshift_installer_image_tag }}'
+        cleanup: yes
+        detach: no
+        user: '{{ user_id.stdout }}'
+        env:
+          INVENTORY_DIR: /tmp/inventory
+          OPTS: '--private-key=/opt/app-root/src/.ssh/id_rsa -e @/tmp/config.yml'
+          PLAYBOOK_FILE: playbooks/{{ item }}.yml
+        volumes:
+          - /home/fabian/.ssh/id_rsa:/opt/app-root/src/.ssh/id_rsa:Z,ro
+          - '{{ inventory_dir | default(ansible_inventory_sources[0] | dirname) }}/awx_inventory:/tmp/inventory:Z,ro'
+          - /etc/hosts:/etc/hosts:Z,ro
+          - /etc/resolv.conf:/etc/resolv.conf:Z,ro
+          - '{{ inventory_dir | default(ansible_inventory_sources[0] | dirname) }}/config.yml:/tmp/config.yml:Z,ro'
+      with_items:
+        - prerequisites
+        - deploy_cluster
