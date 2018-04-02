@@ -1,5 +1,5 @@
 [masters]
-master.example.org
+master.example.org ansible_host=192.168.17.11
 
 [etcd:children]
 masters

@@ -4,10 +4,13 @@
 
 - hosts: first_master
   tasks:
-      - name: Create foreman dnsmasq entry
-        copy:
-          content: server=/{{ master_subdomain }}/{{ master_ip }}
-          dest: /etc/dnsmasq.d/homecluster-dns.conf
+    - name: disable selinux
+      command: setenforce 0
+
+    - name: Create foreman dnsmasq entry
+      copy:
+        content: server=/{{ master_subdomain }}/{{ master_ip }}
+        dest: /etc/dnsmasq.d/homecluster-dns.conf
 
 - hosts: localhost
   vars:
@@ -47,8 +50,8 @@
 
     - name: create admin user account
       command: oc adm policy add-cluster-role-to-user cluster-admin admin
-      delegate_to: first_master
+      delegate_to: '{{ groups.first_master.0 }}'
 
     - name: login as admin
-      command: oc login -u admin -p admin
+      command: oc login -u admin -p admin https://{{ groups.first_master.0 }}:8443 --insecure-skip-tls-verify=true
       ignore_errors: true

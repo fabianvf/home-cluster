@@ -16,5 +16,9 @@ openshift_set_hostname: true
 ansible_python_interpreter: /usr/bin/python3
 openshift_storage_glusterfs_storageclass_default: true
 
+openshift_master_node_labels:
+  node-role.kubernetes.io/master: 'true'
+  node-role.kubernetes.io/compute: 'true'
+
 ansible_service_broker_registry_whitelist:
   - '.*'
