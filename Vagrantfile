@@ -26,7 +26,7 @@ Vagrant.configure("2") do |config|
       master.vm.hostname = 'master.example.org'
       master.hostmanager.enabled = true
       master.hostmanager.manage_host = true
-      master.hostmanager.manage_guest = true
+      master.hostmanager.manage_guest = false
       master.vm.network :private_network,
         :mac => "52:11:22:33:44:41",
         :ip => '192.168.17.11',
@@ -37,7 +37,12 @@ Vagrant.configure("2") do |config|
       master.vm.synced_folder '.', '/vagrant', disabled: true
 
       master.vm.provision :file, :source => "~/.ssh/id_rsa.pub", :destination => "/tmp/key"
-      master.vm.provision :shell, :inline => "cat /tmp/key >> /home/vagrant/.ssh/authorized_keys;  mkdir -p /root/.ssh ; cp /home/vagrant/.ssh/authorized_keys /root/.ssh/authorized_keys"
+      master.vm.provision :shell, :inline => <<-EOF
+        cat /tmp/key >> /home/vagrant/.ssh/authorized_keys
+        mkdir -p /root/.ssh
+        cp /home/vagrant/.ssh/authorized_keys /root/.ssh/authorized_keys
+        sed -i 's/127.0.0.1.*master.example.org/192.168.17.11 master.example.org/' /etc/hosts
+      EOF
 
       master.vm.provision :ansible do |ansible|
         ansible.verbose = verbosity
@@ -45,7 +50,11 @@ Vagrant.configure("2") do |config|
         ansible.become = true
         ansible.limit = 'all,localhost'
         ansible.inventory_path = './inventory'
-        ansible.extra_vars = {}
+        ansible.extra_vars = {
+          "master_hostname": "master.example.org",
+          "master_ip": "192.168.17.11",
+          "master_subdomain": "example.org"
+        }
       end
 
       # if Vagrant.has_plugin?("vagrant-triggers") and nodes.length > 0

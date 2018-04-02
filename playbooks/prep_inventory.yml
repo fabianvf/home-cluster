@@ -6,7 +6,7 @@
     copy:
       content: |
           [masters]
-          {{ groups.first_master.0 }}
+          {{ groups.first_master.0 }} ansible_host={{ hostvars[groups.first_master.0].ansible_host }}
 
           [etcd:children]
           masters

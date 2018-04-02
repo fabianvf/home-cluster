@@ -2,6 +2,13 @@
 
 - import_playbook: prep_inventory.yml
 
+- hosts: first_master
+  tasks:
+      - name: Create foreman dnsmasq entry
+        copy:
+          content: server=/{{ master_subdomain }}/{{ master_ip }}
+          dest: /etc/dnsmasq.d/homecluster-dns.conf
+
 - hosts: localhost
   vars:
     openshift_installer_image_org: openshift
@@ -37,3 +44,11 @@
       with_items:
         - prerequisites
         - deploy_cluster
+
+    - name: create admin user account
+      command: oc adm policy add-cluster-role-to-user cluster-admin admin
+      delegate_to: first_master
+
+    - name: login as admin
+      command: oc login -u admin -p admin
+      ignore_errors: true
