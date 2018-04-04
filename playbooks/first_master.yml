@@ -40,10 +40,10 @@
           PLAYBOOK_FILE: playbooks/{{ item }}.yml
         volumes:
           - /home/fabian/.ssh/id_rsa:/opt/app-root/src/.ssh/id_rsa:Z,ro
-          - '{{ inventory_dir | default(ansible_inventory_sources[0] | dirname) }}/awx_inventory:/tmp/inventory:Z,ro'
+          - '{{ playbook_dir }}/../awx_inventory:/tmp/inventory:Z,ro'
           - /etc/hosts:/etc/hosts:Z,ro
           - /etc/resolv.conf:/etc/resolv.conf:Z,ro
-          - '{{ inventory_dir | default(ansible_inventory_sources[0] | dirname) }}/config.yml:/tmp/config.yml:Z,ro'
+          - '{{ playbook_dir }}/../config.yml:/tmp/config.yml:Z,ro'
       with_items:
         - prerequisites
         - deploy_cluster

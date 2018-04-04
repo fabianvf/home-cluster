@@ -17,5 +17,5 @@
           [OSEv3:children]
           masters
           nodes
-      dest: '{{ inventory_dir | default(ansible_inventory_sources[0] | dirname) }}/awx_inventory/hosts'
+      dest: '{{ playbook_dir }}/../awx_inventory/hosts'
     run_once: yes
