@@ -1,7 +1,0 @@
----
-
-- import_playbook: prep_inventory.yml
-
-- hosts: awx
-  roles:
-    - awx

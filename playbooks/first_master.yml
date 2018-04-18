@@ -7,12 +7,16 @@
     - name: disable selinux
       command: setenforce 0
 
-    - name: Create foreman dnsmasq entry
+    - name: Create dnsmasq entry
       copy:
         content: server=/{{ master_subdomain }}/{{ master_ip }}
         dest: /etc/dnsmasq.d/homecluster-dns.conf
+      vars:
+        master_subdomain: "{{ inventory_hostname.split('.')[1:] | join('.') }}"
+        master_ip: '{{ ansible_host }}'
 
 - hosts: localhost
+  connection: local
   vars:
     openshift_installer_image_org: openshift
     openshift_installer_image_tag: v3.9
@@ -26,8 +30,10 @@
       service:
         name: docker
         state: restarted
+      become: true
+      when: restart_docker|default(true)
 
-    - name: Install single node openshift
+    - name: Install single node openshift (run `docker logs -f openshift-ansible` to follow progress)
       docker_container:
         name: openshift-ansible
         image: '{{ openshift_installer_image_org }}/origin-ansible:{{ openshift_installer_image_tag }}'
@@ -47,6 +53,7 @@
       with_items:
         - prerequisites
         - deploy_cluster
+      when: deploy_openshift|default(true)
 
     - name: create admin user account
       command: oc adm policy add-cluster-role-to-user cluster-admin admin
@@ -54,4 +61,51 @@
 
     - name: login as admin
       command: oc login -u admin -p admin https://{{ groups.first_master.0 }}:8443 --insecure-skip-tls-verify=true
-      ignore_errors: true
+      delegate_to: '{{ groups.first_master.0 }}'
+
+    - when: admin_api_token is not defined
+      block:
+      - name: Get admin token
+        command: oc whoami -t
+        register: token
+        delegate_to: '{{ groups.first_master.0 }}'
+
+      - set_fact:
+          admin_api_token: '{{ token.stdout }}'
+
+    - name: Create home-cluster namespace
+      k8s_raw:
+        api_version: v1
+        kind: Namespace
+        name: home-cluster
+        state: present
+
+    - name: Install rook (Ceph storage for cluster)
+      import_role:
+        name: run_apb
+      vars:
+        action: provision
+        name: ceph-apb
+        namespace: home-cluster
+        image: docker.io/homecluster/ceph-apb:latest
+        pull_policy: Always
+        parameters:
+          namespace: home-cluster
+          admin_api_key: '{{ admin_api_token }}'
+
+    - name: Install Ansible Tower
+      import_role:
+        name: run_apb
+      vars:
+        action: provision
+        name: tower-apb
+        namespace: home-cluster
+        image: docker.io/homecluster/tower-apb:latest
+        pull_policy: Always
+        parameters:
+          skip_tls_verify: true
+          postgresql_emptydir: true
+          _apb_plan_id: all-in-one
+          namespace: home-cluster
+          enable_dangerous_logs: true
+          admin_api_token: '{{ admin_api_token }}'
