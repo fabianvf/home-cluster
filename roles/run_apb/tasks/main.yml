@@ -1,0 +1,42 @@
+---
+
+- name: "{{ action }} {{ name }}"
+  register: job
+  vars:
+    suffix: '{{ 99999 | random }}'
+  k8s_raw:
+    state: present
+    resource_definition:
+      apiVersion: v1
+      kind: Job
+      metadata:
+        name: '{{ action }}-{{ name }}-{{ suffix }}'
+        namespace: '{{ namespace }}'
+      spec:
+        parallelism: 1
+        completions: 1
+        backoffLimit: 0
+        template:
+          metadata:
+            name: '{{ action }}-{{ name }}'
+          spec:
+            containers:
+              - name: '{{ action }}-{{ name }}'
+                image: '{{ image }}'
+                imagePullPolicy: '{{ pull_policy|default("ifNotPresent") }}'
+                args:
+                  - '{{ action|default("provision") }}'
+                  - '--extra-vars'
+                  - '{{ parameters | to_json }}'
+            restartPolicy: Never
+
+- name: Wait for {{ action }}-{{ name }} job to finish
+  debug:
+    msg: "Waiting for job to complete... (Run `oc logs job/{{ job.result.metadata.name }} for progress`)"
+  until: job_lookup.status.succeeded or result|failed
+  failed_when: job_lookup.status.failed
+  retries: '{{ apb_retries|default(60) }}'
+  delay: '{{ apb_retry_delay|default(10) }}'
+  register: result
+  vars:
+    job_lookup: "{{ lookup('k8s', kind='Job', namespace=namespace, resource_name=job.result.metadata.name) }}"
