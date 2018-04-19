@@ -3,7 +3,7 @@ ansible_ssh_user: root
 
 os_update: true
 
-openshift_master_default_subdomain: "apps.{{ foreman_subdomain }}"
+openshift_master_default_subdomain: "apps.{{ master_subdomain }}"
 # etcd_image: quay.io/coreos/etcd:latest
 openshift_deployment_type: origin
 containerized: true

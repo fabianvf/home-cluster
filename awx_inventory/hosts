@@ -1,5 +1,10 @@
 [masters]
-master.example.org ansible_host=192.168.17.11
+master.example.org 
+
+[masters:vars]
+ansible_host=192.168.17.11
+master_subdomain=example.org
+
 
 [etcd:children]
 masters

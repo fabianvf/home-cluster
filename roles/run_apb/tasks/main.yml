@@ -43,3 +43,10 @@
   register: result
   vars:
     job_lookup: "{{ lookup('k8s', kind='Job', api_key=api_key|default(none), host=host|default(none), verify_ssl=verify_ssl|default(true), namespace=namespace, resource_name=job.result.metadata.name) }}"
+
+- name: Clean up jobs
+  k8s_raw:
+    state: absent
+    name: "{{ job.result.metadata.name }}"
+    namespace: "{{ namespace }}"
+  when: cleanup|default(true)
