@@ -9,7 +9,9 @@
 
     - name: Create dnsmasq entry
       copy:
-        content: server=/{{ master_subdomain }}/{{ master_ip }}
+        content: |
+          server=/{{ master_subdomain }}/127.0.0.1
+          address=/apps.{{ master_subdomain }}/{{ master_ip }}
         dest: /etc/dnsmasq.d/homecluster-dns.conf
       vars:
         master_subdomain: "{{ inventory_hostname.split('.')[1:] | join('.') }}"
@@ -20,6 +22,7 @@
   vars:
     openshift_installer_image_org: openshift
     openshift_installer_image_tag: v3.9
+    openshift_host: 'https://{{ groups.first_master.0 }}:8443'
   tasks:
     - name: Get ID of current user
       command: id -u
@@ -75,6 +78,9 @@
 
     - name: Create home-cluster namespace
       k8s_raw:
+        host: '{{ openshift_host }}'
+        api_key: '{{ admin_api_token }}'
+        verify_ssl: no
         api_version: v1
         kind: Namespace
         name: home-cluster
@@ -84,6 +90,9 @@
       import_role:
         name: run_apb
       vars:
+        api_key: '{{ admin_api_token }}'
+        host: '{{ openshift_host }}'
+        verify_ssl: no
         action: provision
         name: ceph-apb
         namespace: home-cluster
@@ -97,6 +106,9 @@
       import_role:
         name: run_apb
       vars:
+        api_key: '{{ admin_api_token }}'
+        host: '{{ openshift_host }}'
+        verify_ssl: no
         action: provision
         name: tower-apb
         namespace: home-cluster
