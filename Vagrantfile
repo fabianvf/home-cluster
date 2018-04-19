@@ -32,7 +32,9 @@ Vagrant.configure("2") do |config|
         :ip => '192.168.17.11',
         :libvirt__network_name => "home-cluster",
         :libvirt__dhcp_enabled => true,
-        :libvirt__netmask => "255.255.255.0"
+        :libvirt__netmask => "255.255.255.0",
+        :libvirt__dhcp_bootp_file => "undionly.kpxe",
+        :libvirt__dhcp_bootp_server => "192.168.17.11"
 
       master.vm.synced_folder '.', '/vagrant', disabled: true
 
