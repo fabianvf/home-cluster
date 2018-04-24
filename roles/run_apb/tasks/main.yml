@@ -47,6 +47,8 @@
 - name: Clean up jobs
   k8s_raw:
     state: absent
+    kind: Job
+    api_version: v1
     name: "{{ job.result.metadata.name }}"
     namespace: "{{ namespace }}"
   when: cleanup|default(true)
