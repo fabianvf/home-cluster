@@ -9,8 +9,11 @@ master_subdomain=example.org
 [etcd:children]
 masters
 
+[new_nodes]
+
 [nodes:children]
 masters
+new_nodes
 
 [OSEv3:children]
 masters
