@@ -53,7 +53,6 @@
         tower_host: https://awx-web-svc-home-cluster.apps.{{ master_subdomain }}
         params: '{{ item.content.items() | map("join", " ") | join(" ") }}'
       with_items: '{{ tower_resources }}'
-      tags: do
 
     - name: add awx pod to inventory
       add_host:

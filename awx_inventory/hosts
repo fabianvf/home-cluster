@@ -1,10 +1,9 @@
 [masters]
-master.example.org 
+master.example.org
 
 [masters:vars]
 ansible_host=192.168.17.11
 master_subdomain=example.org
-
 
 [etcd:children]
 masters
@@ -13,7 +12,6 @@ masters
 
 [nodes:children]
 masters
-new_nodes
 
 [OSEv3:children]
 masters
