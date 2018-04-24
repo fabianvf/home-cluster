@@ -4,9 +4,6 @@
   vars_files:
     - '{{ playbook_dir }}/../config.yml'
   tasks:
-    - name: disable selinux
-      command: setenforce 0
-
     - name: Create dnsmasq entry
       copy:
         content: |
@@ -18,7 +15,6 @@
 
 - hosts: localhost
   connection: local
-  vars:
   vars_files:
     - '{{ playbook_dir }}/../config.yml'
   tasks:
@@ -50,7 +46,7 @@
           - '{{ playbook_dir }}/../awx_inventory:/tmp/inventory:Z,ro'
           - /etc/hosts:/etc/hosts:Z,ro
           - /etc/resolv.conf:/etc/resolv.conf:Z,ro
-          - '{{ playbook_dir }}/../config.yml:/tmp/config.yml:Z,ro'
+          - '{{ playbook_dir }}/../openshift_overrides.yml:/tmp/config.yml:Z,ro'
       with_items:
         - prerequisites
         - deploy_cluster

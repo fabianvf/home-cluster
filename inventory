@@ -1,2 +1,2 @@
 [first_master]
-master.example.org ansible_ssh_user=root ansible_host=192.168.17.11 master_subnet=192.168.17.0
+master.example.org ansible_ssh_user=root ansible_host=192.168.17.11

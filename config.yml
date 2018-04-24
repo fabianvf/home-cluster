@@ -1,7 +1,17 @@
 ---
+###########################################################################
+# User variables                                                          #
+###########################################################################
 
 openshift_installer_image_org: openshift
 openshift_installer_image_tag: v3.9
+
+###########################################################################
+# Project variables                                                       #
+# -----------------                                                       #
+# These should work as-is, modification is still possible but it will be  #
+# very easy to break things                                               #
+###########################################################################
 openshift_host: 'https://{{ groups.first_master.0 }}:8443'
 master_subdomain: '{{ groups.first_master.0.split(".")[1:] | join(".") }}'
 
