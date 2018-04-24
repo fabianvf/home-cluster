@@ -48,7 +48,7 @@ Vagrant.configure("2") do |config|
 
       master.vm.provision :ansible do |ansible|
         ansible.verbose = verbosity
-        ansible.playbook = 'playbooks/first_master.yml'
+        ansible.playbook = 'playbooks/deploy.yml'
         ansible.become = true
         ansible.limit = 'all,localhost'
         ansible.inventory_path = './inventory'
