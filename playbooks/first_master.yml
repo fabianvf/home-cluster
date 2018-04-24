@@ -60,7 +60,7 @@
       when: deploy_openshift|default(true)
 
     - name: create admin user account
-      command: oc adm policy add-cluster-role-to-user cluster-admin admin
+      shell: oc login -u system:admin && oc adm policy add-cluster-role-to-user cluster-admin admin
       delegate_to: '{{ groups.first_master.0 }}'
 
     - name: login as admin
@@ -123,6 +123,17 @@
           enable_dangerous_logs: true
           admin_api_token: '{{ admin_api_token }}'
 
+    - name: write tower credential information
+      vars:
+        sep: "\n  "
+      copy:
+        content: |
+          username: root
+          become_method: sudo
+          ssh_key_data: |
+            {{ lookup("file", "/home/fabian/.ssh/id_rsa").splitlines() | join(sep) }}
+        dest: /tmp/awx_credentials
+
     - name: get awx-compatible inventory
       command: ansible-inventory -i {{ playbook_dir }}/../awx_inventory --list --export -y
       register: awx_inventory
@@ -140,6 +151,7 @@
         - {resource: organization, content: '-n home-cluster'}
         - {resource: project, content: '-n openshift-ansible --organization home-cluster --scm-type git --scm-url https://github.com/openshift/openshift-ansible.git --wait'}
         - {resource: inventory, content: '-n home-cluster --organization home-cluster'}
+        - {resource: credential, content: '-n home-cluster --organization home-cluster --credential-type Machine --inputs @/tmp/awx_credentials'}
 
     - name: add awx pod to inventory
       add_host:
