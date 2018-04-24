@@ -1,5 +1,15 @@
 ---
 
+- name: Create {{ namespace }} namespace
+  k8s_raw:
+    host: '{{ host }}'
+    api_key: '{{ api_key }}'
+    verify_ssl: no
+    api_version: v1
+    kind: Namespace
+    name: '{{ namespace }}'
+    state: present
+
 - name: "{{ action }} {{ name }}"
   register: job
   vars:
@@ -36,7 +46,7 @@
 - name: Wait for {{ action }}-{{ name }} job to finish
   debug:
     msg: "Waiting for job to complete... (Run `oc logs job/{{ job.result.metadata.name }} for progress`)"
-  until: job_lookup.status.succeeded or result|failed
+  until: job_lookup.status.succeeded or result is failed
   failed_when: job_lookup.status.failed
   retries: '{{ apb_retries|default(60) }}'
   delay: '{{ apb_retry_delay|default(10) }}'

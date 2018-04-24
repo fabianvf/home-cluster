@@ -6,12 +6,11 @@
     copy:
       content: |
           [masters]
-          {{ groups.first_master.0 }} 
+          {{ groups.first_master.0 }}
 
           [masters:vars]
           ansible_host={{ hostvars[groups.first_master.0].ansible_host }}
           master_subdomain={{ groups.first_master.0.split('.')[1:]|join('.')}}
-
 
           [etcd:children]
           masters
@@ -20,7 +19,6 @@
 
           [nodes:children]
           masters
-          new_nodes
 
           [OSEv3:children]
           masters

@@ -1,0 +1,22 @@
+- import_playbook: cluster_auth.yml
+
+- hosts: localhost
+  connection: local
+  vars_files:
+    - '{{ playbook_dir }}/../config.yml'
+  tasks:
+    - name: Install rook (Ceph storage for cluster)
+      import_role:
+        name: run_apb
+      vars:
+        api_key: '{{ admin_api_token }}'
+        host: '{{ openshift_host }}'
+        verify_ssl: no
+        action: provision
+        name: ceph-apb
+        namespace: home-cluster
+        image: docker.io/homecluster/ceph-apb:latest
+        pull_policy: Always
+        parameters:
+          namespace: home-cluster
+          admin_api_key: '{{ admin_api_token }}'
