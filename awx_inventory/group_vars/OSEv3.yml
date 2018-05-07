@@ -4,12 +4,9 @@ ansible_ssh_user: root
 os_update: true
 
 openshift_master_default_subdomain: "apps.{{ master_subdomain }}"
-# etcd_image: quay.io/coreos/etcd:latest
 openshift_deployment_type: origin
-containerized: true
-openshift_use_system_containers: true
 openshift_disable_check: memory_availability
-openshift_image_tag: v3.9.0
+openshift_image_tag: v3.10
 openshift_master_identity_providers: [{'name': 'htpasswd_auth','login': 'true', 'challenge': 'true','kind': 'AllowAllPasswordIdentityProvider'}]
 openshift_schedulable: true
 openshift_set_hostname: true

@@ -4,6 +4,8 @@
 
 - hosts: localhost
   connection: local
+  vars:
+    tower_apb_image: docker.io/homecluster/tower-apb:latest
   vars_files:
     - '{{ playbook_dir }}/../config.yml'
   tasks:
@@ -11,14 +13,15 @@
       import_role:
         name: run_apb
       vars:
+        permissions: cluster
         api_key: '{{ admin_api_token }}'
         host: '{{ openshift_host }}'
         verify_ssl: no
         action: provision
         name: tower-apb
         namespace: home-cluster
-        image: docker.io/homecluster/tower-apb:latest
-        pull_policy: Always
+        image: '{{ tower_apb_image }}'
+        pull_policy: '{{ pull_policy }}'
         parameters:
           skip_tls_verify: true
           postgresql_emptydir: true

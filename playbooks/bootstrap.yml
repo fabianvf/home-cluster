@@ -4,6 +4,11 @@
   vars_files:
     - '{{ playbook_dir }}/../config.yml'
   tasks:
+    - name: set selinux to permissive
+      selinux:
+        policy: targeted
+        state: permissive
+
     - name: Create dnsmasq entry
       copy:
         content: |
@@ -36,6 +41,7 @@
         image: '{{ openshift_installer_image_org }}/origin-ansible:{{ openshift_installer_image_tag }}'
         cleanup: yes
         detach: no
+        pull: '{{ true if pull_policy == "Always" else false }}'
         user: '{{ user_id.stdout }}'
         env:
           INVENTORY_DIR: /tmp/inventory
