@@ -7,63 +7,59 @@ This is a repository of playbooks/scripts to deploy, configure, and manage a pri
 My wife is a photographer, and generates between 1TB and 3TB of media per year. I am a software engineer working on Openshift, and have a variety of applications running on our local network, spread around a ton of hardware. I'm sick of manually configuring/fixing things, and was hoping to leverage some of my professional experience to provide a secure local network backup system for my wife, and a good platform for hosting/running applications for me.
 
 # Roadmap
-- [x] Foreman deploy (including TFTP and DNS)
-- [x] Sync Fedora Atomic images to Foreman
-- [x] Provision nodes with Fedora Atomic
-- [x] Deployment of Openshift Origin
-- [x] Deployment of Heketi and gluster
-  - [x] Configuration of gluster for dynamic persistent volume provisioning
-- [ ] Deployment and configuration of various services (feel free to add PRs to expand this list, it's a wishlist)
-  - [ ] [Seafile](https://www.seafile.com/en/home/) 
-    - [Containerized: yes](https://github.com/haiwen/seafile-docker) (just not built yet) (official)
-    - GPL v2.0
-  - [ ] [Collabora online](https://www.collaboraoffice.com/)
-    - [Containerized: yes](https://hub.docker.com/r/collabora/code/) (official)
-    - License unknown, but they claim it is FOSS. LibreOffice is Mozilla Public License v2.0
-  - [ ] [NextCloud](https://nextcloud.com/)
-    - [Containerized: yes](https://hub.docker.com/_/nextcloud/) (official)
-    - GNU AGPL v3.0
+- [x] Deployment of Openshift Origin single node install
+- [ ] Deployment of TFTP to install fedora atomic on nodes
+- [ ] Deployment of AWX for node scaleup
+    - [x] Awx deployment
+    - [x] awx resource creation to enable node scaleup (incl openshift-ansible project import)
+    - [ ] Job trigger for node discovery
+    - [ ] Dynamic inventory to allow scaleup on registration of new nodes
+- [x] Deployment of Rook and Ceph
+  - [x] Configuration of rook/ceph for dynamic persistent volume provisioning
+- [ ] Deployment and configuration of various services (will be worked on in the order listed, feel free to add PRs to expand this list)
   - [ ] [ZoneMinder](https://zoneminder.com/)
     - [Containerized: yes](https://hub.docker.com/r/kylejohnson/zoneminder/) (unofficial, but based on official dockerfile)
     - GPL v2.0
+  - [ ] [Home Assistant](https://home-assistant.io/)
+    - [Containerized: yes](https://hub.docker.com/r/homeassistant/home-assistant/)
+    - Apache v2.0
+  - [ ] [Seafile](https://www.seafile.com/en/home/)
+    - [Containerized: yes](https://github.com/haiwen/seafile-docker) (just not built yet) (official)
+    - GPL v2.0
+  - [ ] [NextCloud](https://nextcloud.com/)
+    - [Containerized: yes](https://hub.docker.com/_/nextcloud/) (official)
+    - GNU AGPL v3.0
+  - [ ] [Collabora online](https://www.collaboraoffice.com/)
+    - [Containerized: yes](https://hub.docker.com/r/collabora/code/) (official)
+    - License unknown, but they claim it is FOSS. LibreOffice is Mozilla Public License v2.0
+  - [ ] Streama (https://streamaserver.org)
+      - [Containerized: yes](https://hub.docker.com/r/gkiko/streama) (official I think?)
+      - MIT
+  - [ ] [Organizr](https://github.com/causefx/Organizr)
+    - [Containerized: yes](https://hub.docker.com/r/lsiocommunity/organizr/) (community contributed, but officially endorsed)
+    - GPL v3.0
   - [ ] [Monica](https://monicahq.com/)
     - [Containerized: yes](https://hub.docker.com/r/monicahq/monicahq/) (official)
     - GNU AGPL v3.0
-  - ~~[ ] [Ambar](https://ambar.cloud/)~~
-    - ~~[ ]Containerized?~~
-    - Fair source licensed, disqualified
   - [ ] [Emby](https://emby.media/)
     - [Containerized: yes](https://hub.docker.com/r/emby/embyserver/) (official)
     - GPL v2.0
   - [ ] [Plex](https://www.plex.tv/)
     - [Containerized: yes](https://hub.docker.com/r/plexinc/pms-docker/) (official)
     - GPL v2.0 (for the host software, client is proprietary)
-  - [ ] [Home Assistant](https://home-assistant.io/)
-    - [Containerized: yes](https://hub.docker.com/r/homeassistant/home-assistant/)
-    - Apache v2.0 
-  - [ ] [Organizr](https://github.com/causefx/Organizr)
-    - [Containerized: yes](https://hub.docker.com/r/lsiocommunity/organizr/) (community contributed, but officially endorsed)
-    - GPL v3.0
 
 
 # Quickstart
 
 ## Dependencies
 You  will need:
-- ansible >= 2.3
-- python-netaddr
-- python-requests
-- openshift-ansible
-    - pyOpenSSL
-    - python-cryptography
-    - python-lxml
-- TODO: audit additional/implicit dependencies
+- docker
+- ansible >= 2.5
 
 For Fedora:
 
 ```bash
 dnf install -y python-netaddr python-requests ansible pyOpenSSL python-cryptography python-lxml
-git clone https://github.com/openshift/openshift-ansible /usr/share/ansible/openshift-ansible
 ```
 
 ## Virtual environment
@@ -98,71 +94,52 @@ There are a few environment variables that can be set to alter the behavior of t
 |VERBOSITY | verbosity level to run Ansible (ie, `v`, `vv`, `vvv`)|
 
 
-## Bare Metal
+## Real deployment
 
 For deployment onto physical hosts or external VMs (ie anything that isn't the aforementioned vagrant environment)
 
 ### Hardware
-- 1 server that will host Foreman.
-    - The Foreman ansible roles assume that CentOS 7 is installed on this machine, use anything else at your own risk
-- N >= 3 servers that will serve as openshift nodes.
-    - These servers will need to be configured to network boot. Most vendors provide these settings in the BIOS screen.
-    - At least three of your nodes will need to have > 1 disks, so that it can be tagged and used as a gluster storage host.
+- 1 server that will host the first master
+    - Needs to be running fedora atomic
+    - Needs at least 2 disks
+- N servers that will serve as openshift nodes.
+    - These servers will need to be configured to network boot.
+    - Any disks other than the boot disk will be used for storage
 
 ### Networking
-- Foreman needs a static IP + hostname
-- Your router needs to use Foreman for DNS (at least for a subdomain on your network)
-- Your router needs to use Foreman for TFTP
+- The first master will need to have a static IP and hostname
+- Your router will need to be configured to use the first master for DNS (for your local subdomain) and TFTP
+- Your router will need to be configured to use the first master for TFTP
 
 Here's a sample dnsmasq configuration, from the vagrant environment:
 
 ```
-address=/foreman.example.org/192.168.17.11
+address=/master.example.org/192.168.17.11
 server=/example.org/192.168.17.11
 server=/17.168.192.in-addr.arpa/192.168.17.11
-dhcp-boot=pxelinux.0,foreman.example.org,192.168.17.11
+dhcp-boot=pxelinux.0,master.example.org,192.168.17.11
 ```
 
-### Foreman
+### Configuration
 
-First, copy the `config.yml.example` file to `config.yml` and open it for editing. For a basic
-Foreman install, the most important options to consider are `foreman_hostname` and
-`foreman_subdomain`, which you should make match the networking entries you made above. For
-example, if my foreman IP is bound to `foreman.example.org`, I would set `foreman_hostname`
-to `foreman`, and `foreman_subdomain` to `example.org`. It is also recommended that you change
-the passwords from `changeme` to something more secure. If your Foreman machine has multiple
-NICs, you may also need to manually set the `foreman_dns_interface` to the correct one, as by
-default we select the primary interface from the ansible facts.
+There's a file named `config.yml` at the top level of the project. It contains all of the configuration required to deploy
+the project. There are two sections to the config.yml, a User variable section and a Project variable section. The user
+variables are meant to be modified your environment or to trigger different features. They should be well-documented inline.
+The Project variables are more low-level, required for the project to run. They can still be modified, but have a high chance
+of breaking.
 
-To install Foreman, just run
+### Deployment
+
+If you have a server up, add it to the `first_master` section of the top-level `inventory`, then run:
 
 ```bash
-ansible-playbook playbooks/foreman.yml -e @config.yml
+ansible-playbook playbooks/deploy.yml
 ```
 
-This should run pretty painlessly, if there are any issues during the deployment of Foreman feel free to open an issue.
+This should give you a working Openshift + Ceph + AWX installation.
 
-
-## Openshift
-
-To install openshift you will need to clone the `openshift-ansible` project. By default, we will look for `openshift-ansible`
-in `/usr/share/ansible/`. To get the project there you can just run
-
-```bash
-git clone https://github.com/openshift/openshift-ansible.git /usr/share/ansible/openshift-ansible
-```
-
-If you've cloned or copied the project to another directory, you can set the location in the `openshift_ansible_dir`
-in your `config.yml`
-
-The openshift installation is the same no matter your environment. It uses a dynamic inventory pulled from Foreman, so
-all you need to do is run:
-
-```bash
-ansible-playbook playbooks/nodes.yml -e @config.yml
-```
-
-This should give you a working Openshift installation, feel free to open an issue if something falls over.
+Additional services can be configured in the `config.yml` to be included in the first installation, or you can go
+to the newly deployed Openshift web console and deploy them from the interface there.
 
 
 # Contributions welcome!
