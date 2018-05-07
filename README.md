@@ -32,7 +32,7 @@ My wife is a photographer, and generates between 1TB and 3TB of media per year. 
   - [ ] [Collabora online](https://www.collaboraoffice.com/)
     - [Containerized: yes](https://hub.docker.com/r/collabora/code/) (official)
     - License unknown, but they claim it is FOSS. LibreOffice is Mozilla Public License v2.0
-  - [ ] Streama (https://streamaserver.org)
+  - [ ] [Streama](https://streamaserver.org)
       - [Containerized: yes](https://hub.docker.com/r/gkiko/streama) (official I think?)
       - MIT
   - [ ] [Organizr](https://github.com/causefx/Organizr)
