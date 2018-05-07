@@ -1,60 +1,27 @@
 - name: Prepare inventory
-  hosts: ansible_runner
+  hosts: localhost
   gather_facts: no
   tasks:
-  - name: Template foreman.ini
-    copy:
-      content: |
-          [foreman]
-          url = https://{{ foreman_hostname }}.{{ foreman_subdomain }}
-          user = admin
-          password = {{ foreman_admin_password }}
-          ssl_verify = False
-
-          [ansible]
-          group_patterns = ["{app}-{tier}-{color}",
-                      "{app}-{color}",
-                      "{app}",
-                      "{tier}"]
-          group_prefix = foreman_
-          # Whether to fetch facts from Foreman and store them on the host
-          want_facts = True
-
-          [cache]
-          path = .
-          max_age = 60
-      dest: '{{ inventory_dir}}/foreman.ini'
-    run_once: yes
   - name: Template hosts
     copy:
       content: |
-          [foreman]
-          {{ foreman_hostname }}.{{ foreman_subdomain }}
+          [masters]
+          {{ groups.first_master.0 }}
 
-          [masters:children]
-          foreman_hostgroup_openshift_nodes_openshift_master
+          [masters:vars]
+          ansible_host={{ hostvars[groups.first_master.0].ansible_host }}
+          master_subdomain={{ groups.first_master.0.split('.')[1:]|join('.')}}
 
           [etcd:children]
           masters
 
-          [foreman_hostgroup_openshift_nodes_openshift_master]
+          [new_nodes]
 
           [nodes:children]
-          foreman_hostgroup_openshift_nodes
           masters
-
-          [foreman_hostgroup_openshift_nodes]
 
           [OSEv3:children]
           masters
           nodes
-
-          [glusterfs:children]
-          nodes
-      dest: '{{ inventory_dir}}/home_cluster_hosts'
+      dest: '{{ playbook_dir }}/../awx_inventory/hosts'
     run_once: yes
-
-  - meta: refresh_inventory
-
-  - debug:
-      var: groups.all

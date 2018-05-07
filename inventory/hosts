@@ -1,5 +1,0 @@
-[ansible_runner]
-localhost
-
-[ansible_runner:vars]
-ansible_connection=local

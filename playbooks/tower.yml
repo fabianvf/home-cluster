@@ -1,0 +1,78 @@
+---
+
+- import_playbook: cluster_auth.yml
+
+- hosts: localhost
+  connection: local
+  vars:
+    tower_apb_image: docker.io/homecluster/tower-apb:latest
+  vars_files:
+    - '{{ playbook_dir }}/../config.yml'
+  tasks:
+    - name: Install Ansible Tower
+      import_role:
+        name: run_apb
+      vars:
+        permissions: cluster
+        api_key: '{{ admin_api_token }}'
+        host: '{{ openshift_host }}'
+        verify_ssl: no
+        action: provision
+        name: tower-apb
+        namespace: home-cluster
+        image: '{{ tower_apb_image }}'
+        pull_policy: '{{ pull_policy }}'
+        parameters:
+          skip_tls_verify: true
+          postgresql_emptydir: true
+          _apb_plan_id: all-in-one
+          namespace: home-cluster
+          enable_dangerous_logs: true
+          admin_api_token: '{{ admin_api_token }}'
+
+    - name: write tower credential information
+      vars:
+        sep: "\n  "
+      copy:
+        content: |
+          username: root
+          become_method: sudo
+          ssh_key_data: |
+            {{ lookup("file", "/home/fabian/.ssh/id_rsa").splitlines() | join(sep) }}
+        dest: /tmp/awx_credentials
+
+    - name: get awx-compatible inventory
+      command: ansible-inventory -i {{ playbook_dir }}/../awx_inventory --list --export -y
+      register: awx_inventory
+
+    - name: write inventory to file
+      copy:
+        content: '{{ awx_inventory.stdout }}'
+        dest: /tmp/awx_inventory
+
+    - name: Create resources
+      command: tower-cli {{ item.resource }} create {{ params }} --insecure -p password -u admin -h {{ tower_host }}
+      vars:
+        tower_host: https://awx-web-svc-home-cluster.apps.{{ master_subdomain }}
+        params: '{{ item.content.items() | map("join", " ") | join(" ") }}'
+      with_items: '{{ tower_resources }}'
+
+    - name: add awx pod to inventory
+      add_host:
+        name: '{{ lookup("k8s", kind="Pod", namespace="home-cluster", label_selector="name=awx-web-deploy", host=openshift_host, api_key=admin_api_key).metadata.name }}'
+        groups: awx
+        oc_container: awx_web
+        oc_host: '{{ openshift_host }}'
+        oc_namespace: home-cluster
+        oc_token: '{{ admin_api_key }}'
+
+- hosts: awx
+  connection: oc
+  tasks:
+    - name: copy inventory file
+      copy:
+        src: /tmp/awx_inventory
+        dest: /tmp/inventory
+
+    - name: sync inventory
+      command: awx-manage inventory_import --inventory-name=home-cluster --source /tmp/inventory

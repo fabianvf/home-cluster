@@ -1,8 +1,0 @@
----
-
-- import_playbook: prep_inventory.yml
-
-- name: Wait for discovered hosts
-  hosts: foreman
-  roles:
-    - wait_for_discovered_hosts

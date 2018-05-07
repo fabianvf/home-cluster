@@ -1,0 +1,133 @@
+---
+
+- set_fact:
+    binding_meta:
+      name: '{{ name }}-{{ action }}er'
+  when: permissions|default(none) == 'cluster'
+- set_fact:
+    binding_meta:
+      name: '{{ name }}-{{ action }}er'
+      namespace: '{{ namespace }}'
+  when: permissions|default(none) != 'cluster'
+
+
+- name: Create {{ namespace }} namespace
+  k8s_raw:
+    host: '{{ host }}'
+    api_key: '{{ api_key }}'
+    verify_ssl: no
+    api_version: v1
+    kind: Namespace
+    name: '{{ namespace }}'
+    state: present
+
+
+- name: Create serviceaccount
+  k8s_raw:
+    kind: ServiceAccount
+    api_version: v1
+    name: '{{ name }}-{{ action}}er'
+    namespace: '{{ namespace }}'
+    host: '{{ host }}'
+    api_key: '{{ api_key }}'
+    verify_ssl: no
+    state: present
+
+- name: Create binding for serviceaccount
+  k8s_raw:
+    host: '{{ host }}'
+    api_key: '{{ api_key }}'
+    verify_ssl: no
+    state: present
+    definition:
+      kind: '{{ "ClusterRoleBinding" if permissions|default(none) == "cluster" else "RoleBinding" }}'
+      # apiVersion: rbac.authorization.k8s.io/v1
+      apiVersion: v1
+      metadata: '{{ binding_meta }}'
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: '{{ "ClusterRole" if permissions|default(none) == "cluster" else "Role" }}'
+        name: '{{ "cluster-admin" if permissions|default(none) == "cluster" else "admin" }}'
+      subjects:
+        - kind: ServiceAccount
+          name: '{{ name }}-{{ action }}er'
+          namespace: '{{ namespace }}'
+
+- name: "{{ action }} {{ name }}"
+  register: job
+  vars:
+    suffix: '{{ 99999 | random }}'
+  k8s_raw:
+    state: present
+    api_key: '{{ api_key | default(none) }}'
+    host: '{{ host | default(none) }}'
+    verify_ssl: '{{ verify_ssl | default(true) }}'
+    resource_definition:
+      apiVersion: v1
+      kind: Job
+      metadata:
+        name: '{{ action }}-{{ name }}-{{ suffix }}'
+        namespace: '{{ namespace }}'
+      spec:
+        parallelism: 1
+        completions: 1
+        backoffLimit: 0
+        template:
+          metadata:
+            name: '{{ action }}-{{ name }}'
+          spec:
+            serviceAccountName: '{{ name }}-{{ action }}er'
+            containers:
+              - name: '{{ action }}-{{ name }}'
+                image: '{{ image }}'
+                imagePullPolicy: '{{ pull_policy|default("ifNotPresent") }}'
+                args:
+                  - '{{ action|default("provision") }}'
+                  - '--extra-vars'
+                  - '{{ parameters | to_json }}'
+            restartPolicy: Never
+
+- name: Wait for {{ action }}-{{ name }} job to finish
+  debug:
+    msg: "Waiting for job to complete... (Run `oc logs job/{{ job.result.metadata.name }} for progress`)"
+  until: job_lookup.status.succeeded or result is failed
+  failed_when: job_lookup.status.failed
+  retries: '{{ apb_retries|default(60) }}'
+  delay: '{{ apb_retry_delay|default(10) }}'
+  register: result
+  vars:
+    job_lookup: "{{ lookup('k8s', kind='Job', api_key=api_key|default(none), host=host|default(none), verify_ssl=verify_ssl|default(true), namespace=namespace, resource_name=job.result.metadata.name) }}"
+
+- name: Clean up jobs
+  k8s_raw:
+    host: '{{ host }}'
+    api_key: '{{ api_key }}'
+    verify_ssl: no
+    state: absent
+    kind: Job
+    api_version: v1
+    name: "{{ job.result.metadata.name }}"
+    namespace: "{{ namespace }}"
+  when: cleanup|default(true)
+
+- name: Clean up sandbox
+  k8s_raw:
+    host: '{{ host }}'
+    api_key: '{{ api_key }}'
+    verify_ssl: no
+    state: absent
+    kind: '{{ item.kind }}'
+    api_version: '{{ item.api_version }}'
+    name: '{{ item.name }}'
+    namespace: '{{ item.get("namespace") }}'
+  with_items:
+    - kind: ServiceAccount
+      api_version: v1
+      name: '{{ name }}-{{ action }}er'
+      namespace: '{{ namespace }}'
+    - kind: '{{ "ClusterRoleBinding" if permissions|default(none) == "cluster" else none}}'
+      api_version: v1
+      name: '{{ name }}-{{ action }}er'
+      namespace: '{{ namespace if permissions|default(none) != "cluster" else none }}'
+      # api_version: rbac.authorization.k8s.io/v1
+

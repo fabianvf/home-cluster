@@ -1,9 +1,0 @@
----
-
-- import_playbook: prep_inventory.yml
-
-- name: install foreman
-  hosts: foreman
-  roles:
-    - foreman
-    - reboot

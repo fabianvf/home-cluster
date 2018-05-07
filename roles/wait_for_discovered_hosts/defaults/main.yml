@@ -1,8 +1,0 @@
----
-
-number_of_hosts: 0
-prompt_for_hosts: '{{ number_of_hosts == 0 }}'
-rebuild_foreman_hosts: '{{ prompt_for_hosts }}'
-discovery_success: false
-
-foreman_cert_dest: /tmp/foreman_ca_crt.pem
