@@ -21,6 +21,5 @@
         name: ceph-apb
         namespace: home-cluster
         image: '{{ ceph_apb_image }}'
-        pull_policy: '{{ pull_policy }}'
         parameters:
           namespace: home-cluster

@@ -12,18 +12,18 @@
 
 
 - name: Create {{ namespace }} namespace
-  k8s_raw:
+  k8s:
     host: '{{ host }}'
     api_key: '{{ api_key }}'
     verify_ssl: no
-    api_version: v1
-    kind: Namespace
+    api_version: project.openshift.io/v1
+    kind: ProjectRequest
     name: '{{ namespace }}'
     state: present
 
 
 - name: Create serviceaccount
-  k8s_raw:
+  k8s:
     kind: ServiceAccount
     api_version: v1
     name: '{{ name }}-{{ action}}er'
@@ -34,15 +34,14 @@
     state: present
 
 - name: Create binding for serviceaccount
-  k8s_raw:
+  k8s:
     host: '{{ host }}'
     api_key: '{{ api_key }}'
     verify_ssl: no
     state: present
     definition:
       kind: '{{ "ClusterRoleBinding" if permissions|default(none) == "cluster" else "RoleBinding" }}'
-      # apiVersion: rbac.authorization.k8s.io/v1
-      apiVersion: v1
+      apiVersion: rbac.authorization.k8s.io/v1
       metadata: '{{ binding_meta }}'
       roleRef:
         apiGroup: rbac.authorization.k8s.io
@@ -57,17 +56,26 @@
   register: job
   vars:
     suffix: '{{ 99999 | random }}'
-  k8s_raw:
+    default_args:
+      - '{{ action | default("provision") }}'
+      - '--extra-vars'
+      - '{{ parameters | to_json }}'
+    extra_args: '{{ [extra_ansible_args] if extra_ansible_args|default(false) else [] }}'
+  k8s:
     state: present
     api_key: '{{ api_key | default(none) }}'
     host: '{{ host | default(none) }}'
     verify_ssl: '{{ verify_ssl | default(true) }}'
     resource_definition:
-      apiVersion: v1
+      apiVersion: batch/v1
       kind: Job
       metadata:
         name: '{{ action }}-{{ name }}-{{ suffix }}'
         namespace: '{{ namespace }}'
+        labels:
+          type: apb
+          action: provision
+          apb: '{{ name }}'
       spec:
         parallelism: 1
         completions: 1
@@ -75,43 +83,44 @@
         template:
           metadata:
             name: '{{ action }}-{{ name }}'
+            labels:
+              type: apb
+              action: provision
+              apb: '{{ name }}'
           spec:
             serviceAccountName: '{{ name }}-{{ action }}er'
             containers:
               - name: '{{ action }}-{{ name }}'
                 image: '{{ image }}'
                 imagePullPolicy: '{{ pull_policy|default("ifNotPresent") }}'
-                args:
-                  - '{{ action|default("provision") }}'
-                  - '--extra-vars'
-                  - '{{ parameters | to_json }}'
+                args: '{{ default_args + extra_args }}'
             restartPolicy: Never
 
 - name: Wait for {{ action }}-{{ name }} job to finish
   debug:
     msg: "Waiting for job to complete... (Run `oc logs job/{{ job.result.metadata.name }} for progress`)"
-  until: job_lookup.status.succeeded or result is failed
-  failed_when: job_lookup.status.failed
+  until: job_lookup.status.get("succeeded") or result is failed
+  failed_when: job_lookup.status.get("failed")
   retries: '{{ apb_retries|default(60) }}'
   delay: '{{ apb_retry_delay|default(10) }}'
   register: result
   vars:
-    job_lookup: "{{ lookup('k8s', kind='Job', api_key=api_key|default(none), host=host|default(none), verify_ssl=verify_ssl|default(true), namespace=namespace, resource_name=job.result.metadata.name) }}"
+    job_lookup: "{{ lookup('k8s', api_version='batch/v1', kind='Job', api_key=api_key|default(none), host=host|default(none), verify_ssl=verify_ssl|default(true), namespace=namespace, resource_name=job.result.metadata.name) }}"
 
 - name: Clean up jobs
-  k8s_raw:
+  k8s:
     host: '{{ host }}'
     api_key: '{{ api_key }}'
     verify_ssl: no
     state: absent
     kind: Job
-    api_version: v1
+    api_version: batch/v1
     name: "{{ job.result.metadata.name }}"
     namespace: "{{ namespace }}"
   when: cleanup|default(true)
 
 - name: Clean up sandbox
-  k8s_raw:
+  k8s:
     host: '{{ host }}'
     api_key: '{{ api_key }}'
     verify_ssl: no
@@ -126,8 +135,6 @@
       name: '{{ name }}-{{ action }}er'
       namespace: '{{ namespace }}'
     - kind: '{{ "ClusterRoleBinding" if permissions|default(none) == "cluster" else none}}'
-      api_version: v1
       name: '{{ name }}-{{ action }}er'
       namespace: '{{ namespace if permissions|default(none) != "cluster" else none }}'
-      # api_version: rbac.authorization.k8s.io/v1
-
+      api_version: rbac.authorization.k8s.io/v1

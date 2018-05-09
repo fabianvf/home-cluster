@@ -21,14 +21,13 @@
         name: tower-apb
         namespace: home-cluster
         image: '{{ tower_apb_image }}'
-        pull_policy: '{{ pull_policy }}'
         parameters:
           skip_tls_verify: true
           postgresql_emptydir: true
           _apb_plan_id: all-in-one
           namespace: home-cluster
           enable_dangerous_logs: true
-          admin_api_token: '{{ admin_api_token }}'
+          recommended_resources: false
 
     - name: write tower credential information
       vars:
@@ -50,21 +49,26 @@
         content: '{{ awx_inventory.stdout }}'
         dest: /tmp/awx_inventory
 
-    - name: Create resources
-      command: tower-cli {{ item.resource }} create {{ params }} --insecure -p password -u admin -h {{ tower_host }}
-      vars:
-        tower_host: https://awx-web-svc-home-cluster.apps.{{ master_subdomain }}
-        params: '{{ item.content.items() | map("join", " ") | join(" ") }}'
-      with_items: '{{ tower_resources }}'
-
     - name: add awx pod to inventory
       add_host:
-        name: '{{ lookup("k8s", kind="Pod", namespace="home-cluster", label_selector="name=awx-web-deploy", host=openshift_host, api_key=admin_api_key).metadata.name }}'
+        name: '{{ lookup("k8s", kind="Pod", namespace="home-cluster", label_selector="name=awx-web-deploy", host=openshift_host, api_key=admin_api_token, verify_ssl=False).metadata.name }}'
         groups: awx
         oc_container: awx_web
         oc_host: '{{ openshift_host }}'
         oc_namespace: home-cluster
-        oc_token: '{{ admin_api_key }}'
+        oc_token: '{{ admin_api_token }}'
+
+- hosts: first_master
+  gather_facts: no
+  vars_files:
+    - '{{ playbook_dir }}/../config.yml'
+  tasks:
+    - name: Create resources
+      command: docker run homecluster/tower-cli {{ item.resource }} create {{ params }} --insecure -p password -u admin -h {{ tower_host }}
+      vars:
+        tower_host: https://awx-web-svc-home-cluster.apps.{{ master_subdomain }}
+        params: '{{ item.content.items() | map("join", " ") | join(" ") }}'
+      with_items: '{{ tower_resources }}'
 
 - hosts: awx
   connection: oc
