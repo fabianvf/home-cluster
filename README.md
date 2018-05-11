@@ -23,6 +23,9 @@ My wife is a photographer, and generates between 1TB and 3TB of media per year. 
   - [ ] [Home Assistant](https://home-assistant.io/)
     - [Containerized: yes](https://hub.docker.com/r/homeassistant/home-assistant/)
     - Apache v2.0
+  - [ ] [Mycroft](https://mycroft.ai)
+    - Containerized: no
+    - GPL v3.0
   - [ ] [Seafile](https://www.seafile.com/en/home/)
     - [Containerized: yes](https://github.com/haiwen/seafile-docker) (just not built yet) (official)
     - GPL v2.0
