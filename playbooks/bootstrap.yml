@@ -53,7 +53,7 @@
           - /etc/hosts:/etc/hosts:Z,ro
           - /etc/resolv.conf:/etc/resolv.conf:Z,ro
           - '{{ playbook_dir }}/../openshift_overrides.yml:/tmp/config.yml:Z,ro'
-      with_items:
+      loop:
         - prerequisites
         - deploy_cluster
       when: deploy_openshift|default(true)

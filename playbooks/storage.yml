@@ -9,10 +9,10 @@
     - '{{ playbook_dir }}/../config.yml'
   tasks:
     - name: Install rook (Ceph storage for cluster)
-      retries: 3
       import_role:
         name: run_apb
       vars:
+        backoff_limit: 3
         permissions: cluster
         api_key: '{{ admin_api_token }}'
         host: '{{ openshift_host }}'
