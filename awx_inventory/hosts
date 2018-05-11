@@ -4,6 +4,8 @@ master.example.org
 [masters:vars]
 ansible_host=192.168.17.11
 master_subdomain=example.org
+openshift_hostname=master.example.org
+openshift_ip=192.168.17.11
 
 [etcd:children]
 masters
