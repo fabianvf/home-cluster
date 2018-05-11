@@ -79,7 +79,7 @@
       spec:
         parallelism: 1
         completions: 1
-        backoffLimit: 0
+        backoffLimit: '{{ backoff_limit|default(0) }}'
         template:
           metadata:
             name: '{{ action }}-{{ name }}'
@@ -129,7 +129,7 @@
     api_version: '{{ item.api_version }}'
     name: '{{ item.name }}'
     namespace: '{{ item.get("namespace") }}'
-  with_items:
+  loop:
     - kind: ServiceAccount
       api_version: v1
       name: '{{ name }}-{{ action }}er'
