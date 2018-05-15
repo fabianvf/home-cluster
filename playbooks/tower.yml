@@ -22,7 +22,7 @@
         namespace: home-cluster
         image: '{{ tower_apb_image }}'
         parameters:
-          skip_tls_verify: true
+          insecure: true
           awx_postgresql_emptydir: true
           _apb_plan_id: all-in-one
           namespace: home-cluster
