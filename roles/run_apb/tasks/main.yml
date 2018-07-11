@@ -94,6 +94,15 @@
                 image: '{{ image }}'
                 imagePullPolicy: '{{ pull_policy|default("ifNotPresent") }}'
                 args: '{{ default_args + extra_args }}'
+                env:
+                  - name: POD_NAME
+                    valueFrom:
+                      fieldRef:
+                        fieldPath: metadata.name
+                  - name: POD_NAMESPACE
+                    valueFrom:
+                      fieldRef:
+                        fieldPath: metadata.namespace
             restartPolicy: Never
 
 - name: Wait for {{ action }}-{{ name }} job to finish
