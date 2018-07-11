@@ -17,6 +17,9 @@
         dest: /etc/dnsmasq.d/homecluster-dns.conf
       vars:
         master_ip: '{{ ansible_host }}'
+    - name: Set hostname to fqdn
+      hostname:
+        name: '{{ inventory_hostname }}'
 
 - hosts: localhost
   connection: local
@@ -28,18 +31,14 @@
       register: user_id
       changed_when: false
 
-    - name: restart docker
-      service:
-        name: docker
-        state: restarted
-      become: true
-      when: restart_docker|default(true)
-
+    # TODO make this a system container on the master
     - name: Install single node openshift (run `docker logs -f openshift-ansible` to follow progress)
       docker_container:
         name: openshift-ansible
         image: '{{ openshift_installer_image_org }}/origin-ansible:{{ openshift_installer_image_tag }}'
         cleanup: yes
+        privileged: yes
+        network_mode: host
         detach: no
         pull: '{{ true if pull_policy == "Always" else false }}'
         user: '{{ user_id.stdout }}'
@@ -47,7 +46,9 @@
           INVENTORY_DIR: /tmp/inventory
           OPTS: '--private-key=/opt/app-root/src/.ssh/id_rsa -e @/tmp/config.yml'
           PLAYBOOK_FILE: playbooks/{{ item }}.yml
+          ANSIBLE_HOST_KEY_CHECKING: False
         volumes:
+          - '{{ playbook_dir }}/../ansible.cfg:/usr/share/ansible/openshift-ansible/ansible.cfg'
           - /home/fabian/.ssh/id_rsa:/opt/app-root/src/.ssh/id_rsa:Z,ro
           - '{{ playbook_dir }}/../awx_inventory:/tmp/inventory:Z,ro'
           - /etc/hosts:/etc/hosts:Z,ro
