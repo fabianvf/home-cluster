@@ -29,14 +29,6 @@
           enable_dangerous_logs: true
           recommended_resources: false
 
-    - name: get awx-compatible inventory
-      command: ansible-inventory -i {{ playbook_dir }}/../awx_inventory --list --export -y
-      register: awx_inventory
-
-    - name: write inventory to file
-      copy:
-        content: '{{ awx_inventory.stdout }}'
-        dest: /tmp/awx_inventory
 
 - hosts: first_master
   gather_facts: no
@@ -93,10 +85,20 @@
 
 - hosts: awx
   connection: oc
+  become: false
   tasks:
-    - name: copy inventory file
+    - name: copy inventory directory
       copy:
-        src: /tmp/awx_inventory
+        src: "{{ playbook_dir }}/../awx_inventory"
+        dest: /tmp/awx_inventory_dir
+
+    - name: get awx-compatible inventory
+      command: ansible-inventory -i /tmp/awx_inventory_dir --list --export -y
+      register: awx_inventory
+
+    - name: write inventory to file
+      copy:
+        content: '{{ awx_inventory.stdout }}'
         dest: /tmp/inventory
 
     - name: sync inventory

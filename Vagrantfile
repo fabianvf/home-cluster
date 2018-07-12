@@ -50,6 +50,7 @@ Vagrant.configure("2") do |config|
         ansible.verbose = verbosity
         ansible.playbook = 'playbooks/deploy.yml'
         ansible.become = true
+        ansible.force_remote_user = false
         ansible.limit = 'all,localhost'
         ansible.inventory_path = './inventory'
         ansible.extra_vars = {
