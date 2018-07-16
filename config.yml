@@ -3,9 +3,10 @@
 # User variables                                                          #
 ###########################################################################
 
-openshift_installer_image_org: openshift
-openshift_installer_image_tag: v3.10
+openshift_installer_image_org: homecluster
+openshift_installer_image_tag: latest
 pull_policy: Always
+ansible_ssh_extra_args : '-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
 
 ###########################################################################
 # Project variables                                                       #
@@ -16,7 +17,7 @@ pull_policy: Always
 openshift_host: 'https://{{ groups.first_master.0 }}:8443'
 master_subdomain: '{{ groups.first_master.0.split(".")[1:] | join(".") }}'
 
-awx_credential_file: /tmp/awx_credentials
+awx_credential_file: /tmp/awx/credentials
 
 tower_resources:
   - resource: organization

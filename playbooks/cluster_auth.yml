@@ -1,23 +1,25 @@
 ---
 
+- hosts: first_master
+  tasks:
+    - name: Add cluster-admin permissions to admin user
+      when: admin_api_token is not defined
+      run_once: true
+      shell: oc login -u system:admin && oc adm policy add-cluster-role-to-user cluster-admin admin
+
+    - name: login as admin
+      command: oc login -u admin -p admin https://{{ groups.first_master.0 }}:8443 --insecure-skip-tls-verify=true
+
+    - name: Get admin token
+      command: oc whoami -t
+      register: token
+
+    - set_fact:
+        admin_api_token: '{{ token.stdout }}'
+
+
 - hosts: localhost
   connection: local
   tasks:
-    - when: admin_api_token is not defined
-      run_once: true
-      block:
-      - name: Add cluster-admin permissions to admin user
-        shell: oc login -u system:admin && oc adm policy add-cluster-role-to-user cluster-admin admin
-        delegate_to: '{{ groups.first_master.0 }}'
-
-      - name: login as admin
-        command: oc login -u admin -p admin https://{{ groups.first_master.0 }}:8443 --insecure-skip-tls-verify=true
-        delegate_to: '{{ groups.first_master.0 }}'
-
-      - name: Get admin token
-        command: oc whoami -t
-        register: token
-        delegate_to: '{{ groups.first_master.0 }}'
-
-      - set_fact:
-          admin_api_token: '{{ token.stdout }}'
+    - set_fact:
+        admin_api_token: '{{ hostvars[groups.first_master.0].admin_api_token }}'

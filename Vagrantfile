@@ -33,9 +33,12 @@ Vagrant.configure("2") do |config|
         :libvirt__network_name => "home-cluster",
         :libvirt__dhcp_enabled => true,
         :libvirt__netmask => "255.255.255.0",
-        :libvirt__dhcp_bootp_file => "undionly.kpxe",
         :libvirt__dhcp_bootp_server => "192.168.17.11"
 
+      master.vm.provider :libvirt do |domain|
+        domain.storage :file, :size => '40G', :type => 'raw'
+        domain.storage :file, :size => '40G', :type => 'raw'
+      end
       master.vm.synced_folder '.', '/vagrant', disabled: true
 
       master.vm.provision :file, :source => "~/.ssh/id_rsa.pub", :destination => "/tmp/key"
@@ -50,6 +53,7 @@ Vagrant.configure("2") do |config|
         ansible.verbose = verbosity
         ansible.playbook = 'playbooks/deploy.yml'
         ansible.become = true
+        ansible.force_remote_user = false
         ansible.limit = 'all,localhost'
         ansible.inventory_path = './inventory'
         ansible.extra_vars = {
@@ -84,7 +88,7 @@ Vagrant.configure("2") do |config|
       node.vm.hostname = name
 
       node.vm.provider :libvirt do |domain|
-        domain.storage :file, :size => '80G', :type => 'raw'
+        domain.storage :file, :size => '40G', :type => 'raw'
         domain.storage :file, :size => '40G', :type => 'raw'
         domain.mgmt_attach = 'false'
         domain.management_network_name = 'home-cluster'

@@ -21,14 +21,24 @@
         name: tower-apb
         namespace: home-cluster
         image: '{{ tower_apb_image }}'
-        pull_policy: '{{ pull_policy }}'
         parameters:
-          skip_tls_verify: true
-          postgresql_emptydir: true
+          insecure: true
+          awx_postgresql_emptydir: true
           _apb_plan_id: all-in-one
           namespace: home-cluster
           enable_dangerous_logs: true
-          admin_api_token: '{{ admin_api_token }}'
+          recommended_resources: false
+
+
+- hosts: first_master
+  gather_facts: no
+  vars_files:
+    - '{{ playbook_dir }}/../config.yml'
+  tasks:
+    - name: Create tower directory
+      file:
+        path: /tmp/awx
+        state: directory
 
     - name: write tower credential information
       vars:
@@ -39,39 +49,56 @@
           become_method: sudo
           ssh_key_data: |
             {{ lookup("file", "/home/fabian/.ssh/id_rsa").splitlines() | join(sep) }}
-        dest: /tmp/awx_credentials
+        dest: /tmp/awx/credentials
+
+    - name: wait for tower to come up
+      debug:
+        msg: '{{ ready|length }}/4 report ready: {{ ready|map(attribute="name")|join(",")  }}'
+      until: (ready|length) == 4
+      retries: 60
+      vars:
+        ready: '{{ lookup(
+          "k8s",
+          kind="Pod",
+          namespace="home-cluster",
+          label_selector="deploymentconfig=awx"
+        ).status.containerStatuses|default([]) | selectattr("ready", "eq", true) | list}}'
+
+    - name: Create resources
+      command: docker run -v /tmp/awx:/tmp/awx:Z homecluster/tower-cli {{ item.resource }} create {{ params }} --insecure -p password -u admin -h {{ tower_host }}
+      retries: 10
+      vars:
+        tower_host: https://awx-web-svc-home-cluster.apps.{{ master_subdomain }}
+        params: '{{ item.content.items() | map("join", " ") | join(" ") }}'
+      loop: '{{ tower_resources }}'
+
+    - name: add awx pod to inventory
+      add_host:
+        name: '{{ lookup("k8s", kind="Pod", namespace="home-cluster", label_selector="name=awx-web-deploy", host=openshift_host, api_key=admin_api_token, verify_ssl=False).metadata.name }}'
+        groups: awx
+        ansible_user: awx
+        oc_container: awx_web
+        oc_host: '{{ openshift_host }}'
+        oc_namespace: home-cluster
+        oc_token: '{{ admin_api_token }}'
+        oc_verify_ssl: false
+
+- hosts: awx
+  connection: oc
+  become: false
+  tasks:
+    - name: copy inventory directory
+      copy:
+        src: "{{ playbook_dir }}/../awx_inventory"
+        dest: /tmp/awx_inventory_dir
 
     - name: get awx-compatible inventory
-      command: ansible-inventory -i {{ playbook_dir }}/../awx_inventory --list --export -y
+      command: ansible-inventory -i /tmp/awx_inventory_dir --list --export -y
       register: awx_inventory
 
     - name: write inventory to file
       copy:
         content: '{{ awx_inventory.stdout }}'
-        dest: /tmp/awx_inventory
-
-    - name: Create resources
-      command: tower-cli {{ item.resource }} create {{ params }} --insecure -p password -u admin -h {{ tower_host }}
-      vars:
-        tower_host: https://awx-web-svc-home-cluster.apps.{{ master_subdomain }}
-        params: '{{ item.content.items() | map("join", " ") | join(" ") }}'
-      with_items: '{{ tower_resources }}'
-
-    - name: add awx pod to inventory
-      add_host:
-        name: '{{ lookup("k8s", kind="Pod", namespace="home-cluster", label_selector="name=awx-web-deploy", host=openshift_host, api_key=admin_api_key).metadata.name }}'
-        groups: awx
-        oc_container: awx_web
-        oc_host: '{{ openshift_host }}'
-        oc_namespace: home-cluster
-        oc_token: '{{ admin_api_key }}'
-
-- hosts: awx
-  connection: oc
-  tasks:
-    - name: copy inventory file
-      copy:
-        src: /tmp/awx_inventory
         dest: /tmp/inventory
 
     - name: sync inventory

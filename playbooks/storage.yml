@@ -9,10 +9,10 @@
     - '{{ playbook_dir }}/../config.yml'
   tasks:
     - name: Install rook (Ceph storage for cluster)
-      retries: 3
       import_role:
         name: run_apb
       vars:
+        backoff_limit: 1
         permissions: cluster
         api_key: '{{ admin_api_token }}'
         host: '{{ openshift_host }}'
@@ -21,6 +21,8 @@
         name: ceph-apb
         namespace: home-cluster
         image: '{{ ceph_apb_image }}'
-        pull_policy: '{{ pull_policy }}'
         parameters:
           namespace: home-cluster
+          flex_volume_plugin_dir: /var/lib/origin/volumeplugins
+          replicas: 1
+          set_default_storage_class: "true"

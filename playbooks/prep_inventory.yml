@@ -11,6 +11,8 @@
           [masters:vars]
           ansible_host={{ hostvars[groups.first_master.0].ansible_host }}
           master_subdomain={{ groups.first_master.0.split('.')[1:]|join('.')}}
+          openshift_hostname={{ groups.first_master.0}}
+          openshift_ip={{ hostvars[groups.first_master.0].ansible_host }}
 
           [etcd:children]
           masters
