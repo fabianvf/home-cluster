@@ -23,6 +23,6 @@
         image: '{{ ceph_apb_image }}'
         parameters:
           namespace: home-cluster
-          flex_volume_plugin_dir: /var/lib/origin/volumeplugins
+          flex_volume_plugin_dir: /etc/origin/kubelet-plugins/volume/exec
           replicas: 1
           set_default_storage_class: "true"

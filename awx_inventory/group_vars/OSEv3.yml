@@ -1,6 +1,8 @@
 ansible_become: true
 ansible_ssh_user: root
 
+openshift_enable_service_catalog: false
+
 os_update: true
 
 openshift_master_default_subdomain: "apps.{{ master_subdomain }}"
