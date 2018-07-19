@@ -1,6 +1,11 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+MASTER_CPUS = 2
+MASTER_MEMORY_SIZE_GB = 2
+NODE_CPUS = 1
+NODE_MEMORY_SIZE_GB = 2
+MASTER_IP = '192.168.17.11'.freeze
 
 Vagrant.configure("2") do |config|
 
@@ -24,16 +29,10 @@ Vagrant.configure("2") do |config|
     config.vm.define 'master.example.org', :primary => true do |master|
       master.vm.box = "fedora/27-atomic-host"
       master.vm.hostname = 'master.example.org'
+      master.vm.network :private_network, ip: MASTER_IP
       master.hostmanager.enabled = true
       master.hostmanager.manage_host = true
       master.hostmanager.manage_guest = false
-      master.vm.network :private_network,
-        :mac => "52:11:22:33:44:41",
-        :ip => '192.168.17.11',
-        :libvirt__network_name => "home-cluster",
-        :libvirt__dhcp_enabled => true,
-        :libvirt__netmask => "255.255.255.0",
-        :libvirt__dhcp_bootp_server => "192.168.17.11"
 
       master.vm.provider :libvirt do |domain|
         domain.storage :file, :size => '40G', :type => 'raw'
@@ -86,6 +85,10 @@ Vagrant.configure("2") do |config|
       node.hostmanager.manage_guest = false
       node.hostmanager.manage_host = false
       node.vm.hostname = name
+      node.vm.provider 'virtualbox' do |n|
+          n.cpus = NODE_CPUS
+          n.memory = NODE_MEMORY_SIZE_GB * 1024
+      end
 
       node.vm.provider :libvirt do |domain|
         domain.storage :file, :size => '40G', :type => 'raw'
