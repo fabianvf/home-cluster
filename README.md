@@ -17,6 +17,9 @@ My wife is a photographer, and generates between 1TB and 3TB of media per year. 
 - [x] Deployment of Rook and Ceph
   - [x] Configuration of rook/ceph for dynamic persistent volume provisioning
 - [ ] Deployment and configuration of various services (will be worked on in the order listed, feel free to add PRs to expand this list)
+  - [ ] [Shinobi](https://moeiscool.github.io/Shinobi/)
+    - [Containerized: yes](https://hub.docker.com/r/moeiscool/docker-shinobi/)
+    - GPL v3.0
   - [ ] [ZoneMinder](https://zoneminder.com/)
     - [Containerized: yes](https://hub.docker.com/r/kylejohnson/zoneminder/) (unofficial, but based on official dockerfile)
     - GPL v2.0
