@@ -19,13 +19,13 @@
         verify_ssl: no
         action: provision
         name: tower-apb
-        namespace: home-cluster
+        namespace: ansible-tower
         image: '{{ tower_apb_image }}'
         parameters:
           insecure: true
-          awx_postgresql_emptydir: true
+          # awx_postgresql_emptydir: true
           _apb_plan_id: all-in-one
-          namespace: home-cluster
+          namespace: ansible-tower
           enable_dangerous_logs: true
           recommended_resources: false
 
@@ -55,22 +55,49 @@
       debug:
         msg: '{{ ready|length }}/4 report ready: {{ ready|map(attribute="name")|join(",")  }}'
       until: (ready|length) == 4
-      retries: 60
+      retries: 100
       vars:
         ready: '{{ lookup(
           "k8s",
           kind="Pod",
           namespace="home-cluster",
-          label_selector="deploymentconfig=awx"
+          label_selector="deploymentconfig=awx",
+          api_key=admin_api_token
         ).status.containerStatuses|default([]) | selectattr("ready", "eq", true) | list}}'
 
-    - name: Create resources
-      command: docker run -v /tmp/awx:/tmp/awx:Z homecluster/tower-cli {{ item.resource }} create {{ params }} --insecure -p password -u admin -h {{ tower_host }}
-      retries: 10
-      vars:
-        tower_host: https://awx-web-svc-home-cluster.apps.{{ master_subdomain }}
-        params: '{{ item.content.items() | map("join", " ") | join(" ") }}'
-      loop: '{{ tower_resources }}'
+    - name: Create tower organization
+      tower_organization:
+        name: home-cluster
+    - name: Create openshift-ansible tower project
+      tower_project:
+        name: openshift-ansible
+        organization: home-cluster
+        scm_type: git
+        scm_url: https://github.com/openshift/openshift-ansible.git
+        scm_branch: release-{{ openshift_version }}
+    # wait?
+    - name: Create home-cluster inventory
+      tower_inventory:
+        name: home-cluster
+        organization: home-cluster
+    - name: Create home-cluster credential
+      tower_credential:
+        name: home-cluster
+        organization: home-cluster
+        kind: ssh
+        username: root
+        become_method: sudo
+        ssh_key_data: /tmp/awx/credentials
+    - name: Create openshift-ansible scaleup job template
+      tower_job_template:
+        name: scaleup
+        become_enabled: yes
+        credential: home-cluster
+        inventory: home-cluster
+        job_type: run
+        project: openshift-ansible
+        playbook: playbooks/openshift-node/scaleup.yml
+        verbosity: 1
 
     - name: add awx pod to inventory
       add_host:
