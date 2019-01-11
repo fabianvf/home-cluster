@@ -3,10 +3,19 @@
 # User variables                                                          #
 ###########################################################################
 
-openshift_installer_image_org: homecluster
-openshift_installer_image_tag: latest
+openshift_version: "3.11"
+
+openshift_installer_image_org: openshift
+openshift_installer_image_tag: v{{ openshift_version }}
 pull_policy: Always
 ansible_ssh_extra_args : '-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
+
+custom_route_script: |
+  #!/bin/bash -x
+  # -*- mode: sh; sh-indentation: 2 -*-
+  route del default gw 192.168.121.1 eth0
+  route add default gw 192.168.17.1 eth1
+  nmcli con mod eth1 ipv4.dns 192.168.17.1
 
 ###########################################################################
 # Project variables                                                       #

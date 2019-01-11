@@ -1,6 +1,6 @@
 - import_playbook: prep_inventory.yml
 
-- hosts: first_master
+- hosts: OSEv3
   vars_files:
     - '{{ playbook_dir }}/../config.yml'
   tasks:
@@ -9,17 +9,41 @@
         policy: targeted
         state: permissive
 
+    - name: Create directories
+      file:
+        state: directory
+        path: '{{ item }}'
+        mode: 0755
+      loop:
+        - /etc/dnsmasq.d
+        - /etc/origin
+        - /etc/origin/kubelet-plugins
+
     - name: Create dnsmasq entry
       copy:
         content: |
-          server=/{{ master_subdomain }}/127.0.0.1
           address=/apps.{{ master_subdomain }}/{{ master_ip }}
         dest: /etc/dnsmasq.d/homecluster-dns.conf
       vars:
         master_ip: '{{ ansible_host }}'
+
+    - when: custom_route_script is defined
+      block:
+        - name: Copy routing table script to /etc/NetworkManager/dispatcher.d/
+          copy:
+            content: '{{ custom_route_script }}'
+            dest: /etc/NetworkManager/dispatcher.d/100-home-cluster-route.sh
+            mode: 0755
+
+        - name: Restart NetworkManager
+          service:
+            name: NetworkManager
+            state: restarted
+
     - name: Set hostname to fqdn
       hostname:
         name: '{{ inventory_hostname }}'
+
 
 - hosts: localhost
   connection: local
@@ -32,7 +56,7 @@
       changed_when: false
 
     # TODO make this a system container on the master
-    - name: Install single node openshift (run `docker logs -f openshift-ansible` to follow progress)
+    - name: Install openshift (run `docker logs -f openshift-ansible` to follow progress)
       docker_container:
         name: openshift-ansible
         image: '{{ openshift_installer_image_org }}/origin-ansible:{{ openshift_installer_image_tag }}'

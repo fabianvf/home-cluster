@@ -6,12 +6,11 @@
     copy:
       content: |
           [masters]
-          {{ groups.first_master.0 }}
+          {{ groups.first_master.0 }} ansible_host={{ hostvars[groups.first_master.0].ansible_host }}
 
           [masters:vars]
-          ansible_host={{ hostvars[groups.first_master.0].ansible_host }}
-          master_subdomain={{ groups.first_master.0.split('.')[1:]|join('.')}}
-          openshift_hostname={{ groups.first_master.0}}
+          master_subdomain={{ groups.first_master.0.split('.')[1:]|join('.') }}
+          openshift_hostname={{ groups.first_master.0 }}
           openshift_ip={{ hostvars[groups.first_master.0].ansible_host }}
 
           [etcd:children]
@@ -19,8 +18,11 @@
 
           [new_nodes]
 
-          [nodes:children]
-          masters
+          [nodes]
+          {{ groups.first_master.0 }} ansible_host={{ hostvars[groups.first_master.0].ansible_host }}
+          {% for node in groups.nodes %}
+          {{ node }} ansible_host={{ hostvars[node].ansible_host }}
+          {% endfor %}
 
           [OSEv3:children]
           masters
