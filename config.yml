@@ -3,10 +3,19 @@
 # User variables                                                          #
 ###########################################################################
 
-openshift_installer_image_org: homecluster
-openshift_installer_image_tag: latest
+openshift_version: "3.11"
+
+openshift_installer_image_org: openshift
+openshift_installer_image_tag: v{{ openshift_version }}
 pull_policy: Always
 ansible_ssh_extra_args : '-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
+
+custom_route_script: |
+  #!/bin/bash -x
+  # -*- mode: sh; sh-indentation: 2 -*-
+  route del default gw 192.168.121.1 eth0
+  route add default gw 192.168.17.1 eth1
+  nmcli con mod eth1 ipv4.dns 192.168.17.1
 
 ###########################################################################
 # Project variables                                                       #
@@ -16,38 +25,3 @@ ansible_ssh_extra_args : '-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecki
 ###########################################################################
 openshift_host: 'https://{{ groups.first_master.0 }}:8443'
 master_subdomain: '{{ groups.first_master.0.split(".")[1:] | join(".") }}'
-
-awx_credential_file: /tmp/awx/credentials
-
-tower_resources:
-  - resource: organization
-    content:
-      '-n': home-cluster
-  - resource: project
-    content:
-      '-n': openshift-ansible
-      '--organization': home-cluster
-      '--scm-type': git
-      '--scm-url': https://github.com/openshift/openshift-ansible.git
-      '--wait': ""
-  - resource: inventory
-    content:
-      '-n': home-cluster
-      '--organization': home-cluster
-  - resource: credential
-    content:
-      '-n': home-cluster
-      '--organization': home-cluster
-      '--credential-type': Machine
-      '--inputs': '@{{ awx_credential_file }}'
-  - resource: job_template
-    content:
-      '-n': scaleup
-      '-i': home-cluster
-      '--job-type': run
-      '--project': openshift-ansible
-      '--playbook': playbooks/openshift-node/scaleup.yml
-      '--credential': home-cluster
-      '--verbosity': verbose
-      '--become-enabled': true
-      '--allow-simultaneous': false

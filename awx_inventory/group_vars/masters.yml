@@ -1,4 +1,5 @@
 ---
 
-openshift_node_labels: {'region': 'infra', 'zone': 'default'}
-# osm_controller_args: {flex-volume-plugin-dir: [/var/lib/origin/volumeplugins]}
+# openshift_node_labels: {'region': 'infra', 'zone': 'default'}
+osm_controller_args: {flex-volume-plugin-dir: [/etc/origin/kubelet-plugins/volume/exec]}
+openshift_node_group_name: home-cluster-master

@@ -1,8 +1,7 @@
 [masters]
-master.example.org
+master.example.org ansible_host=192.168.17.11
 
 [masters:vars]
-ansible_host=192.168.17.11
 master_subdomain=example.org
 openshift_hostname=master.example.org
 openshift_ip=192.168.17.11
@@ -12,8 +11,9 @@ masters
 
 [new_nodes]
 
-[nodes:children]
-masters
+[nodes]
+master.example.org ansible_host=192.168.17.11
+node1.example.org ansible_host=192.168.17.12
 
 [OSEv3:children]
 masters

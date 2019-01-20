@@ -1,22 +1,14 @@
 ansible_become: true
 ansible_ssh_user: root
 
-openshift_enable_service_catalog: false
-
-os_update: true
+# openshift_enable_service_catalog: false
 
 openshift_master_default_subdomain: "apps.{{ master_subdomain }}"
 openshift_deployment_type: origin
 openshift_disable_check: memory_availability
-openshift_image_tag: v3.9.0
+openshift_image_tag: v3.11.0
 openshift_master_identity_providers: [{'name': 'htpasswd_auth','login': 'true', 'challenge': 'true','kind': 'AllowAllPasswordIdentityProvider'}]
-openshift_schedulable: true
-openshift_set_hostname: true
 ansible_python_interpreter: /usr/bin/python3
-
-openshift_master_node_labels:
-  node-role.kubernetes.io/master: 'true'
-  node-role.kubernetes.io/compute: 'true'
 
 openshift_master_open_ports:
 - service: dns tcp
@@ -32,3 +24,31 @@ openshift_node_open_ports:
 
 ansible_service_broker_registry_whitelist:
   - '.*'
+
+enable_excluders: false
+
+# openshift_additional_repos:
+# - id: centos-openshift-origin
+#   name: centos-openshift-origin
+#   baseurl: 'http://mirror.centos.org/centos/7/paas/x86_64/openshift-origin/'
+#   enabled: 1
+#   gpgcheck: 0
+
+openshift_node_groups:
+  - name: home-cluster-master
+    labels:
+      - 'node-role.kubernetes.io/master=true'
+      - 'node-role.kubernetes.io/compute=true'
+      - 'node-role.kubernetes.io/infra=true'
+    edits:
+      - key: kubeletArguments.pods-per-core
+        value: ['20']
+      - key: kubeletArguments.volume-plugin-dir
+        value: ['/etc/origin/kubelet-plugins/volume/exec']
+  - name: home-cluster-node
+    labels:
+      - 'node-role.kubernetes.io/compute=true'
+      - 'node-role.kubernetes.io/infra=true'
+    edits:
+      - key: kubeletArguments.volume-plugin-dir
+        value: ['/etc/origin/kubelet-plugins/volume/exec']
