@@ -19,13 +19,17 @@
         - /etc/origin
         - /etc/origin/kubelet-plugins
 
-    - name: Create dnsmasq entry
-      copy:
-        content: |
-          address=/apps.{{ master_subdomain }}/{{ master_ip }}
-        dest: /etc/dnsmasq.d/homecluster-dns.conf
-      vars:
-        master_ip: '{{ ansible_host }}'
+    - file:
+        path: /etc/dnsmasq.d/homecluster-dns.conf
+        state: absent
+
+    # - name: Create dnsmasq entry
+    #   copy:
+    #     content: |
+    #       address=/apps.{{ master_subdomain }}/{{ master_ip }}
+    #     dest: /etc/dnsmasq.d/homecluster-dns.conf
+    #   vars:
+    #     master_ip: '{{ ansible_host }}'
 
     - when: custom_route_script is defined
       block:
@@ -35,10 +39,13 @@
             dest: /etc/NetworkManager/dispatcher.d/100-home-cluster-route.sh
             mode: 0755
 
-        - name: Restart NetworkManager
-          service:
-            name: NetworkManager
-            state: restarted
+    - name: Restart NetworkManager and dnsmasq
+      service:
+        name: '{{ item }}'
+        state: restarted
+      with_items:
+        - NetworkManager
+        - dnsmasq
 
     - name: Set hostname to fqdn
       hostname:
@@ -79,6 +86,6 @@
           - /etc/resolv.conf:/etc/resolv.conf:Z,ro
           - '{{ playbook_dir }}/../openshift_overrides.yml:/tmp/config.yml:Z,ro'
       loop:
-        - prerequisites
+        # - prerequisites
         - deploy_cluster
       when: deploy_openshift|default(true)

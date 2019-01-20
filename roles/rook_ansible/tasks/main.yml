@@ -1,0 +1,65 @@
+---
+
+##############################################################################
+## Provision ceph
+##############################################################################
+
+- name: Set up security context constraints for OpenShift
+  k8s:
+    definition: '{{ lookup("file", "scc.yaml") }}'
+  when: "'security.openshift.io' in q('k8s', cluster_info='api_groups').0"
+
+- name: Deploy CRDs and operator
+  k8s:
+    definition: '{{ lookup("template", "operator.yaml") }}'
+  vars:
+    rook_requires_privileged: "{{ 'security.openshift.io' in q('k8s', cluster_info='api_groups').0 }}"
+
+- name: Create RBAC resources
+  k8s:
+    definition: '{{ lookup("file", "rbac.yaml") }}'
+
+- name: Deploy cluster
+  k8s:
+    definition: '{{ lookup("template", "cluster.yaml") }}'
+
+# Process this one as a string to workaround the jinja native types issue
+- name: Create storage pool
+  k8s:
+    definition: |
+      apiVersion: ceph.rook.io/v1beta1
+      kind: Pool
+      metadata:
+        name: replicapool
+        namespace: rook-ceph
+      spec:
+        replicated:
+          size: {{ replicas | int }}
+
+- name: Create StorageClass
+  k8s:
+    definition:
+      apiVersion: storage.k8s.io/v1
+      kind: StorageClass
+      metadata:
+        name: rook-ceph-block
+        annotations:
+          storageclass.kubernetes.io/is-default-class: "{{ set_default_storage_class | string }}"
+      provisioner: ceph.rook.io/block
+      parameters:
+        pool: replicapool
+        clusterNamespace: rook-ceph
+
+- name: Create route for dashboard service
+  k8s:
+    definition:
+      kind: Route
+      apiVersion: route.openshift.io/v1
+      metadata:
+        name: dashboard
+        namespace: rook-ceph
+      spec:
+        to:
+          kind: Service
+          name: rook-ceph-mgr-dashboard
+  when: "'route.openshift.io' in q('k8s', cluster_info='api_groups').0"

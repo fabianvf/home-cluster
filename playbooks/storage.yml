@@ -8,21 +8,28 @@
   vars_files:
     - '{{ playbook_dir }}/../config.yml'
   tasks:
-    - name: Install rook (Ceph storage for cluster)
+    - name: Install Ceph
       import_role:
-        name: run_apb
+        name: rook_ansible
       vars:
-        backoff_limit: 1
-        permissions: cluster
-        api_key: '{{ admin_api_token }}'
-        host: '{{ openshift_host }}'
-        verify_ssl: no
-        action: provision
-        name: ceph-apb
-        namespace: home-cluster
-        image: '{{ ceph_apb_image }}'
-        parameters:
-          namespace: home-cluster
-          flex_volume_plugin_dir: /etc/origin/kubelet-plugins/volume/exec
-          replicas: 1
-          set_default_storage_class: "true"
+        flex_volume_plugin_dir: /etc/origin/kubelet-plugins/volume/exec
+        replicas: 1
+        set_default_storage_class: "true"
+    # - name: Install rook (Ceph storage for cluster)
+    #   import_role:
+    #     name: run_apb
+    #   vars:
+    #     backoff_limit: 1
+    #     permissions: cluster
+    #     api_key: '{{ admin_api_token }}'
+    #     host: '{{ openshift_host }}'
+    #     verify_ssl: no
+    #     action: provision
+    #     name: ceph-apb
+    #     namespace: home-cluster
+    #     image: '{{ ceph_apb_image }}'
+    #     parameters:
+    #       namespace: home-cluster
+    #       flex_volume_plugin_dir: /etc/origin/kubelet-plugins/volume/exec
+    #       replicas: 1
+    #       set_default_storage_class: "true"

@@ -1,3 +1,7 @@
+- name: Gather facts
+  hosts: all
+  gather_facts: yes
+
 - name: Prepare inventory
   hosts: localhost
   gather_facts: no
@@ -6,12 +10,12 @@
     copy:
       content: |
           [masters]
-          {{ groups.first_master.0 }} ansible_host={{ hostvars[groups.first_master.0].ansible_host }}
+          {{ groups.first_master.0 }} ansible_host={{ hostvars[groups.first_master.0].ansible_host|default(hostvars[groups.first_master.0].ansible_default_ipv4.address) }}
 
           [masters:vars]
           master_subdomain={{ groups.first_master.0.split('.')[1:]|join('.') }}
           openshift_hostname={{ groups.first_master.0 }}
-          openshift_ip={{ hostvars[groups.first_master.0].ansible_host }}
+          openshift_ip={{ hostvars[groups.first_master.0].ansible_host|default(hostvars[groups.first_master.0].ansible_default_ipv4.address) }}
 
           [etcd:children]
           masters
@@ -19,9 +23,9 @@
           [new_nodes]
 
           [nodes]
-          {{ groups.first_master.0 }} ansible_host={{ hostvars[groups.first_master.0].ansible_host }}
+          {{ groups.first_master.0 }} ansible_host={{ hostvars[groups.first_master.0].ansible_host|default(hostvars[groups.first_master.0].ansible_default_ipv4.address) }}
           {% for node in groups.nodes %}
-          {{ node }} ansible_host={{ hostvars[node].ansible_host }}
+          {{ node }} ansible_host={{ hostvars[node].ansible_host|default(hostvars[node].ansible_default_ipv4.address) }}
           {% endfor %}
 
           [OSEv3:children]

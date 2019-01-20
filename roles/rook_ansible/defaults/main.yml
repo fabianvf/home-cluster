@@ -1,0 +1,11 @@
+replicas: 1
+
+mon_count: 3
+use_all_nodes: "true"
+use_all_devices: "true"
+enable_dashboard: "true"
+use_host_network: "false"
+allow_multiple_mon_per_node: "true"
+
+set_default_storage_class: "false"
+flex_volume_plugin_dir: "/usr/libexec/kubernetes/kubelet-plugins/volume/exec/"
