@@ -9,23 +9,21 @@ My wife is a photographer, and generates between 1TB and 3TB of media per year. 
 # Roadmap
 - [x] Deployment of Openshift Origin single node install
 - [ ] Deployment of TFTP to install fedora atomic on nodes
-- [ ] Deployment of AWX for node scaleup
-    - [x] Awx deployment
-    - [x] awx resource creation to enable node scaleup (incl openshift-ansible project import)
-    - [ ] Job trigger for node discovery
-    - [ ] Dynamic inventory to allow scaleup on registration of new nodes
 - [x] Deployment of Rook and Ceph
   - [x] Configuration of rook/ceph for dynamic persistent volume provisioning
 - [ ] Deployment and configuration of various services (will be worked on in the order listed, feel free to add PRs to expand this list)
+  - [ ] [Jellyfin](https://jellyfin.readthedocs.io/en/latest/)
+    - [Containerized: yes](https://hub.docker.com/r/jellyfin/jellyfin) (official)
+    - GPL v2.0
+  - [ ] [Omby](https://ombi.io/)
+    - [Containerized: yes](https://github.com/linuxserver/docker-ombi)
+    - GPL v2.0
+  - [ ] [Home Assistant](https://home-assistant.io/)
+    - [Containerized: yes](https://hub.docker.com/r/homeassistant/home-assistant/) (official)
+    - Apache v2.0
   - [ ] [Shinobi](https://moeiscool.github.io/Shinobi/)
     - [Containerized: yes](https://hub.docker.com/r/moeiscool/docker-shinobi/)
     - GPL v3.0
-  - [ ] [ZoneMinder](https://zoneminder.com/)
-    - [Containerized: yes](https://hub.docker.com/r/kylejohnson/zoneminder/) (unofficial, but based on official dockerfile)
-    - GPL v2.0
-  - [ ] [Home Assistant](https://home-assistant.io/)
-    - [Containerized: yes](https://hub.docker.com/r/homeassistant/home-assistant/)
-    - Apache v2.0
   - [ ] [Mycroft](https://mycroft.ai)
     - Containerized: no
     - GPL v3.0
@@ -35,25 +33,12 @@ My wife is a photographer, and generates between 1TB and 3TB of media per year. 
   - [ ] [NextCloud](https://nextcloud.com/)
     - [Containerized: yes](https://hub.docker.com/_/nextcloud/) (official)
     - GNU AGPL v3.0
-  - [ ] [Collabora online](https://www.collaboraoffice.com/)
-    - [Containerized: yes](https://hub.docker.com/r/collabora/code/) (official)
-    - License unknown, but they claim it is FOSS. LibreOffice is Mozilla Public License v2.0
-  - [ ] [Streama](https://streamaserver.org)
-      - [Containerized: yes](https://hub.docker.com/r/gkiko/streama) (official I think?)
-      - MIT
   - [ ] [Organizr](https://github.com/causefx/Organizr)
     - [Containerized: yes](https://hub.docker.com/r/lsiocommunity/organizr/) (community contributed, but officially endorsed)
     - GPL v3.0
   - [ ] [Monica](https://monicahq.com/)
     - [Containerized: yes](https://hub.docker.com/r/monicahq/monicahq/) (official)
     - GNU AGPL v3.0
-  - [ ] [Emby](https://emby.media/)
-    - [Containerized: yes](https://hub.docker.com/r/emby/embyserver/) (official)
-    - GPL v2.0
-  - [ ] [Plex](https://www.plex.tv/)
-    - [Containerized: yes](https://hub.docker.com/r/plexinc/pms-docker/) (official)
-    - GPL v2.0 (for the host software, client is proprietary)
-
 
 # Quickstart
 
