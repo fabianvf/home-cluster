@@ -14,6 +14,7 @@ My wife is a photographer, and generates between 1TB and 3TB of media per year. 
 - [ ] Deployment and configuration of various services (will be worked on in the order listed, feel free to add PRs to expand this list)
   - [ ] [Jellyfin](https://jellyfin.readthedocs.io/en/latest/)
     - [Containerized: yes](https://hub.docker.com/r/jellyfin/jellyfin) (official)
+    - [Operator: yes](https://github.com/fabianvf/jellyfin-operator) (Made by me)
     - GPL v2.0
   - [ ] [Omby](https://ombi.io/)
     - [Containerized: yes](https://github.com/linuxserver/docker-ombi)
