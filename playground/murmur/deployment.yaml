@@ -1,0 +1,49 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: murmur-deployment
+  labels:
+    app: murmur
+spec:
+  selector:
+    matchLabels:
+      app: murmur
+  template:
+    metadata:
+      labels:
+        app: murmur
+    spec:
+      containers:
+      - image: goofball222/murmur:latest
+        imagePullPolicy: Always
+        env:
+          - name: RUN_CHOWN
+            value: "false"
+        name: murmur-container
+        stdin: true 
+        tty: true 
+        ports:
+        - containerPort: 64738
+        readinessProbe:
+          tcpSocket:
+            port: 64738
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          tcpSocket:
+            port: 64738
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        volumeMounts:
+        - mountPath: /opt/murmur/config
+          name: murmur-config
+        - mountPath: /opt/murmur/data
+          name: murmur-db
+      volumes:
+      - name: murmur-config
+        persistentVolumeClaim:
+          claimName: murmur-config
+      - name: murmur-db
+        persistentVolumeClaim:
+          claimName: murmur-db
