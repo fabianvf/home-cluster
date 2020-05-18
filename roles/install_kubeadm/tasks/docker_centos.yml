@@ -1,0 +1,57 @@
+- name: Install prerequisites for Docker
+  yum:
+    name:
+      - yum-utils
+      - device-mapper-persistent-data
+      - lvm2
+    state: latest
+
+- name: Enable docker-ce repo
+  get_url:
+    url: https://download.docker.com/linux/centos/docker-ce.repo
+    dest: /etc/yum.repos.d/docker-ce.repo
+
+- name: Update packages
+  yum:
+    name: '*'
+    state: latest
+
+- name: Install proper versions of Docker
+  yum:
+    name:
+      - containerd.io-1.2.13
+      - docker-ce-19.03.8
+      - docker-ce-cli-19.03.8
+
+- name: Create docker directory
+  file:
+    path: /etc/docker
+    state: directory
+
+- name: Create configuration for docker daemon
+  copy:
+    content: |
+      {
+        "exec-opts": ["native.cgroupdriver=systemd"],
+        "log-driver": "json-file",
+        "log-opts": {
+          "max-size": "100m"
+        },
+        "storage-driver": "overlay2",
+        "storage-opts": [
+          "overlay2.override_kernel_check=true"
+        ]
+      }
+    dest: /etc/docker/daemon.json
+
+- name: Create systemd configuration directory for Docker
+  file:
+    path: /etc/systemd/system/docker.service.d
+    state: directory
+
+- name: Start docker
+  systemd:
+    daemon_reload: yes
+    enabled: yes
+    state: started
+    name: docker
