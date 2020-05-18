@@ -56,6 +56,7 @@
           spec:
             taints: '{{ item.spec.taints | rejectattr("key", "eq", "node-role.kubernetes.io/master") | list }}'
       loop: '{{ k8s_nodes.resources }}'
+      when: item.spec.taints is defined and item.spec.taints
 
     - name: Install Calico Pod Network plugin
       community.kubernetes.k8s:
@@ -76,7 +77,7 @@
   hosts: nodes,!first_node
 
   vars:
-    kubeadm_join_cmd: '{{ host_vars[groups[first_node].0].kubeadm_join_cmd }}'
+    kubeadm_join_cmd: '{{ hostvars[groups["first_node"].0].kubeadm_join_cmd }}'
 
   tasks:
     - name: Join node to cluster
