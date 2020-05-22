@@ -82,3 +82,16 @@
   tasks:
     - name: Join node to cluster
       command: '{{ kubeadm_join_cmd }}'
+      args:
+        creates: /etc/kubernetes/kubelet.conf
+
+    - name: Turn node into a worker
+      k8s:
+        definition:
+          apiVersion: v1
+          kind: Node
+          metadata:
+            name: '{{ inventory_hostname }}'
+            labels:
+              node-role.kubernetes.io/worker: ""
+      delegate_to: '{{ groups.first_node.0 }}'
