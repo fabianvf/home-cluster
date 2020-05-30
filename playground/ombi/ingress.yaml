@@ -1,0 +1,14 @@
+---
+kind: Ingress
+apiVersion: extensions/v1beta1
+metadata:
+  name: ombi
+spec:
+  rules:
+  - host: ombi.playerof.games
+    http:
+     paths:
+     - path: /
+       backend:
+        serviceName: ombi
+        servicePort: ombi-http
