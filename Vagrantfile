@@ -34,6 +34,9 @@ Vagrant.configure("2") do |config|
       node.vm.hostname = name
       node.vm.synced_folder '.', '/vagrant', disabled: true
 
+      node.vm.network :private_network,
+        :ip => "192.168.17.#{10 + idx}"
+
       # node.vm.provider :libvirt do |domain|
       #   domain.storage :file, :size => '40G', :type => 'raw'
       #   domain.storage :file, :size => '40G', :type => 'raw'
@@ -43,7 +46,10 @@ Vagrant.configure("2") do |config|
         node.vm.provision :ansible do |ansible|
           ansible.groups = {
             "first_node" => nodes[0],
-            "first_node:vars" => {"kubernetes_master" => true},
+            "first_node:vars" => {
+              "kubernetes_master" => true,
+              "metallb_ip_range" => "192.168.17.180/25"
+            },
             "nodes" => nodes,
             "nodes:vars" => {"kubernetes_node" => true},
           }
@@ -64,5 +70,6 @@ Vagrant.configure("2") do |config|
     libvirt.driver = "kvm"
     libvirt.memory = 2000
     libvirt.cpus = `grep -c ^processor /proc/cpuinfo`.to_i
+    libvirt.qemu_use_session = false
   end
 end
