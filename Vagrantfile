@@ -37,10 +37,9 @@ Vagrant.configure("2") do |config|
       node.vm.network :private_network,
         :ip => "192.168.17.#{10 + idx}"
 
-      # node.vm.provider :libvirt do |domain|
-      #   domain.storage :file, :size => '40G', :type => 'raw'
-      #   domain.storage :file, :size => '40G', :type => 'raw'
-      # end
+      node.vm.provider :libvirt do |domain|
+        domain.storage :file, :size => '10G', :type => 'raw'
+      end
       if idx == nodes.size - 1
         # Kick off provisioning
         node.vm.provision :ansible do |ansible|
