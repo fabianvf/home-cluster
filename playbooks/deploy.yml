@@ -1,4 +1,4 @@
 ---
 
 - import_playbook: install.yml
-- import_playbook: ingress.yml
+- import_playbook: infra.yml

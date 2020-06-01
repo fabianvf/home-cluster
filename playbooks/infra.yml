@@ -1,0 +1,8 @@
+---
+- name: Configure Additional Cluster Infrastructure
+  hosts: first_node
+
+  tasks:
+    - import_tasks: tasks/infra/ingress.yml
+    - import_tasks: tasks/infra/rook.yml
+

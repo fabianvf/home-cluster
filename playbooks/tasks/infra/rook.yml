@@ -1,0 +1,97 @@
+---
+- name: Add rook-release helm repo
+  community.kubernetes.helm_repository:
+    name: rook-release
+    url: https://charts.rook.io/release
+
+- name: Create namespace
+  community.kubernetes.k8s:
+    api_version: v1
+    kind: Namespace
+    name: rook-ceph
+
+- name: Install rook
+  community.kubernetes.helm:
+    name: rook-ceph
+    namespace: rook-ceph
+    chart_ref: rook-release/rook-ceph
+    values:
+      hostPathRequiresPrivileged: false
+
+- name: Create rook-ceph cluster
+  community.kubernetes.k8s:
+    definition:
+      apiVersion: ceph.rook.io/v1
+      kind: CephCluster
+      metadata:
+        name: rook-ceph
+        namespace: rook-ceph
+      spec:
+        cephVersion:
+          image: ceph/ceph:v14
+          allowUnsupported: false
+        dataDirHostPath: /var/lib/rook
+        skipUpgradeChecks: false
+        continueUpgradeAfterChecksEvenIfNotHealthy: false
+        osd:
+          storeType: bluestore
+        mon:
+          count: 3
+          allowMultiplePerNode: true
+        mgr:
+          modules:
+          - name: pg_autoscaler
+            enabled: true
+        dashboard:
+          enabled: true
+          ssl: false
+        monitoring:
+          enabled: false
+          rulesNamespace: rook-ceph
+        rbdMirroring:
+          workers: 0
+        crashCollector:
+          disable: false
+        storage:
+          config:
+            databaseSizeMB: "1024"
+            journalSizeMB: "1024"
+          useAllDevices: true
+          useAllNodes: true
+
+- name: Create Ceph block storage
+  community.kubernetes.k8s:
+    definition:
+      apiVersion: ceph.rook.io/v1
+      kind: CephBlockPool
+      metadata:
+        name: replicapool
+        namespace: rook-ceph
+      spec:
+        failureDomain: osd
+        erasureCoded:
+          dataChunks: 2
+          codingChunks: 1
+          deviceClass: hdd
+
+- name: Create Ceph block storageclass
+  community.kubernetes.k8s:
+    definition:
+      apiVersion: storage.k8s.io/v1
+      kind: StorageClass
+      metadata:
+        name: rook-ceph-block
+        annotations:
+          storageclass.kubernetes.io/is-default-class: "true"
+      provisioner: rook-ceph.rbd.csi.ceph.com
+      parameters:
+          clusterID: rook-ceph
+          pool: replicapool
+          imageFormat: "2"
+          imageFeatures: layering
+          csi.storage.k8s.io/provisioner-secret-name: rook-csi-rbd-provisioner
+          csi.storage.k8s.io/provisioner-secret-namespace: rook-ceph
+          csi.storage.k8s.io/node-stage-secret-name: rook-csi-rbd-node
+          csi.storage.k8s.io/node-stage-secret-namespace: rook-ceph
+          csi.storage.k8s.io/fstype: xfs
+      reclaimPolicy: Delete
