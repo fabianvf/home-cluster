@@ -95,3 +95,21 @@
           csi.storage.k8s.io/node-stage-secret-namespace: rook-ceph
           csi.storage.k8s.io/fstype: xfs
       reclaimPolicy: Delete
+
+- name: Create rook-ceph-manager dashboard
+  community.kubernetes.k8s:
+    definition:
+      apiVersion: networking.k8s.io/v1beta1
+      kind: Ingress
+      metadata:
+        name: rook-ceph-mgr-dashboard
+        namespace: rook-ceph
+      spec:
+        rules:
+        - host: rook-ceph.example.org
+          http:
+            paths:
+            - path: /
+              backend:
+                serviceName: rook-ceph-mgr-dashboard
+                servicePort: dashboard
