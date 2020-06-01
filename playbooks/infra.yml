@@ -5,4 +5,5 @@
   tasks:
     - import_tasks: tasks/infra/ingress.yml
     - import_tasks: tasks/infra/rook.yml
-
+    # TODO: Configure velero backup onto minio NFS gateway
+    # - import_tasks: tasks/infra/velero.yml

@@ -1,0 +1,6 @@
+---
+- name: Deploy applications to cluster
+  hosts: first_node
+
+  tasks:
+    - import_tasks: tasks/apps/murmur.yml
