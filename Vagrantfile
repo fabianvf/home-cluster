@@ -48,7 +48,7 @@ Vagrant.configure("2") do |config|
             "first_node" => nodes[0],
             "first_node:vars" => {
               "kubernetes_master" => true,
-              "metallb_ip_range" => "192.168.17.180/25"
+              "metallb_ip_range" => "192.168.17.100-192.168.17.200"
             },
             "nodes" => nodes,
             "nodes:vars" => {"kubernetes_node" => true},

@@ -3,32 +3,29 @@
 - name: Configure Cluster Ingress
   hosts: first_node
 
-  collections:
-    - community.kubernetes
-
   tasks:
     # TODO: Move to install step somewhere
     - name: Install Helm
       unarchive:
         src: https://get.helm.sh/helm-v3.2.1-linux-amd64.tar.gz
-        dest: /usr/local/bin
+        dest: /usr/bin
         remote_src: yes
         extra_opts:
           - "--strip-components=1"
           - "linux-amd64/helm"
 
     - name: Add stable chart repo
-      helm_repository:
+      community.kubernetes.helm_repository:
         name: stable
         repo_url: "https://kubernetes-charts.storage.googleapis.com"
 
     - name: Add ingress_nginx helm repo
-      helm_repository:
+      community.kubernetes.helm_repository:
         name: ingress-nginx
         url: https://kubernetes.github.io/ingress-nginx
 
     - name: Create namespaces
-      k8s:
+      community.kubernetes.k8s:
         api_version: v1
         kind: Namespace
         name: '{{ item }}'
@@ -37,16 +34,20 @@
         - ingress-nginx
 
     - name: Install MetalLB
-      helm:
+      community.kubernetes.helm:
         name: metallb
         namespace: metallb-system
         chart_ref: stable/metallb
         values:
-          # configInLine: {}
-          arpAddresses: '{{ metallb_ip_range }}'
+          configInline:
+            address-pools:
+            - name: default
+              protocol: layer2
+              addresses:
+              - '{{ metallb_ip_range }}'
 
     - name: Install ingress_nginx
-      helm:
+      community.kubernetes.helm:
         name: ingress-nginx
         namespace: ingress-nginx
         chart_ref: ingress-nginx/ingress-nginx
