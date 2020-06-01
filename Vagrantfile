@@ -5,6 +5,7 @@ Vagrant.configure("2") do |config|
 
   nodes = (1..(ENV["NUM_NODES"]||1).to_i).map {|i| "node#{i}.example.org"}
   verbosity = ENV["VERBOSITY"]||""
+  playbook = ENV["PLAYBOOK"]||"playbooks/deploy.yml"
 
   config.hostmanager.enabled = true
   config.hostmanager.manage_host = true
@@ -53,7 +54,7 @@ Vagrant.configure("2") do |config|
             "nodes:vars" => {"kubernetes_node" => true},
           }
           ansible.verbose = verbosity
-          ansible.playbook = 'playbooks/deploy.yml'
+          ansible.playbook = playbook
           ansible.become = true
           ansible.force_remote_user = false
           ansible.limit = 'all,localhost'
