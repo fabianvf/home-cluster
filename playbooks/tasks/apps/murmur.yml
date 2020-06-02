@@ -117,7 +117,7 @@
       apiVersion: v1
       kind: Service
       metadata:
-        name: murmur-udp
+        name: murmur-tcp
         namespace: murmur
         labels:
           app: murmur

@@ -36,3 +36,4 @@
     name: ingress-nginx
     namespace: ingress-nginx
     chart_ref: ingress-nginx/ingress-nginx
+    wait: yes

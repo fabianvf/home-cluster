@@ -69,10 +69,9 @@
         namespace: rook-ceph
       spec:
         failureDomain: osd
-        erasureCoded:
-          dataChunks: 2
-          codingChunks: 1
-          deviceClass: hdd
+        replicated:
+          size: '{{ storage_data_replicas }}'
+  when: storage_block_create
 
 - name: Create Ceph block storageclass
   community.kubernetes.k8s:
@@ -82,7 +81,7 @@
       metadata:
         name: rook-ceph-block
         annotations:
-          storageclass.kubernetes.io/is-default-class: "true"
+          storageclass.kubernetes.io/is-default-class: "{{ 'true' if storage_block_default else 'false' }}"
       provisioner: rook-ceph.rbd.csi.ceph.com
       parameters:
           clusterID: rook-ceph
@@ -95,6 +94,51 @@
           csi.storage.k8s.io/node-stage-secret-namespace: rook-ceph
           csi.storage.k8s.io/fstype: xfs
       reclaimPolicy: Delete
+  when: storage_block_create
+
+- name: Create Ceph Filesystem storage
+  community.kubernetes.k8s:
+    definition:
+      apiVersion: ceph.rook.io/v1
+      kind: CephFilesystem
+      metadata:
+        name: cephfs-default
+        namespace: rook-ceph
+      spec:
+        metadataPool:
+          failureDomain: osd
+          replicated:
+            size: '{{ storage_metadata_replicas }}'
+        dataPools:
+          - failureDomain: osd
+            replicated:
+              size: '{{ storage_data_replicas }}'
+        preservePoolsOnDelete: true
+        metadataServer:
+          activeCount: 1
+          activeStandby: true
+  when: storage_cephfs_create
+
+- name: Create Ceph block storageclass
+  community.kubernetes.k8s:
+    definition:
+      apiVersion: storage.k8s.io/v1
+      kind: StorageClass
+      metadata:
+        name: rook-cephfs
+        annotations:
+          storageclass.kubernetes.io/is-default-class: "{{ 'true' if storage_cephfs_default else 'false' }}"
+      provisioner: rook-ceph.cephfs.csi.ceph.com
+      parameters:
+        clusterID: rook-ceph
+        fsName: cephfs-default
+        pool: cephfs-default-data0
+        csi.storage.k8s.io/provisioner-secret-name: rook-csi-cephfs-provisioner
+        csi.storage.k8s.io/provisioner-secret-namespace: rook-ceph
+        csi.storage.k8s.io/node-stage-secret-name: rook-csi-cephfs-node
+        csi.storage.k8s.io/node-stage-secret-namespace: rook-ceph
+      reclaimPolicy: Delete
+  when: storage_cephfs_create
 
 - name: Create rook-ceph-manager dashboard
   community.kubernetes.k8s:

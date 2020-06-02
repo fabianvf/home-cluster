@@ -1,0 +1,9 @@
+---
+- hosts: first_node
+
+  tasks:
+    - name: Retrieve admin kubeconfig and store it at {{ playbook_dir }}/../kubeconfig
+      fetch:
+        dest: '{{ playbook_dir }}/../kubeconfig'
+        src: /root/.kube/config
+        flat: yes

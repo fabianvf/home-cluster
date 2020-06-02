@@ -36,7 +36,8 @@ Vagrant.configure("2") do |config|
       node.vm.synced_folder '.', '/vagrant', disabled: true
 
       node.vm.network :private_network,
-        :ip => "192.168.17.#{10 + idx}"
+        :ip => "192.168.17.#{10 + idx}",
+        :libvirt__dhcp_enabled => false
 
       node.vm.provider :libvirt do |domain|
         domain.storage :file, :size => '10G', :type => 'raw'
@@ -48,7 +49,9 @@ Vagrant.configure("2") do |config|
             "first_node" => nodes[0],
             "first_node:vars" => {
               "kubernetes_master" => true,
-              "metallb_ip_range" => "192.168.17.100-192.168.17.200"
+              "metallb_ip_range" => "192.168.17.100-192.168.17.200",
+              "storage_data_replicas" => nodes.length(),
+              "storage_metadata_replicas" => nodes.length(),
             },
             "nodes" => nodes,
             "nodes:vars" => {"kubernetes_node" => true},
