@@ -109,8 +109,6 @@
   register: murmur_udp
   until: "(murmur_udp.resources.0.status.get('loadBalancer', {}).get('ingress', []).0|default({})).ip is defined"
 
-- debug: var=murmur_udp
-
 - name: Create murmur tcp service
   community.kubernetes.k8s:
     definition:
@@ -127,8 +125,40 @@
         type: LoadBalancer
         loadBalancerIP: '{{ murmur_udp.resources.0.status.loadBalancer.ingress.0.ip }}'
         ports:
-          - name: murmur-udp
+          - name: murmur-tcp
             port: 64738
-            protocol: UDP
+            protocol: TCP
         selector:
           app: murmur
+
+- name: Get murmur pod
+  k8s_info:
+    api_version: v1
+    kind: Pod
+    namespace: murmur
+    label_selectors:
+      - 'app=murmur'
+    field_selectors:
+      - 'status.phase=Running'
+  register: murmur_pods
+  until: murmur_pods.resources
+
+- name: Generate a SuperUser password
+  community.kubernetes.k8s_exec:
+    namespace: murmur
+    pod: '{{ murmur_pods.resources.0.metadata.name }}'
+    command: ./murmur.x86 -ini /opt/murmur/config/murmur.ini -supw {{ lookup('password', password_opts) }}
+  vars:
+    password_opts: '{{ playbook_dir }}/../artifacts/mumble_password.txt chars=ascii_letters,digits'
+
+- name: Inform user about credentials
+  debug:
+    msg: |
+      Mumble has been successfully deployed.
+      Address: {{ ip }}
+      Port: 64738
+      Username: SuperUser
+      Password: Stored in {{ password_file }}
+  vars:
+    ip: '{{ murmur_udp.resources.0.status.loadBalancer.ingress.0.ip }}'
+    password_file: '{{ playbook_dir }}/../artifacts/mumble_password.txt'
