@@ -9,6 +9,9 @@
 - hosts: first_node
   become: yes
 
+  vars:
+    master_node_schedulable: false
+
   tasks:
     - name: Install Helm
       unarchive:
@@ -52,10 +55,6 @@
         kind: Node
       register: k8s_nodes
 
-    - debug: var=taints
-      vars:
-        taints: '{{ k8s_nodes.resources.0.spec.taints | rejectattr("key", "eq", "node-role.kubernetes.io/master") | list }}'
-
     - name: Untaint master node
       community.kubernetes.k8s:
         api_version: v1
@@ -65,7 +64,7 @@
           spec:
             taints: '{{ item.spec.taints | rejectattr("key", "eq", "node-role.kubernetes.io/master") | list }}'
       loop: '{{ k8s_nodes.resources }}'
-      when: item.spec.taints is defined and item.spec.taints
+      when: master_node_schedulable and item.spec.taints is defined and item.spec.taints
 
     - name: Install Calico Pod Network plugin
       community.kubernetes.k8s:
