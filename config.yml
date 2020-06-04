@@ -33,3 +33,5 @@ storage_block_default: false
 storage_cephfs_create: true
 # Set to true to make cephfs the default storageclass
 storage_cephfs_default: true
+
+artifacts_dir: "{{ (playbook_dir + '/../artifacts') | realpath }}"

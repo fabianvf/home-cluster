@@ -64,6 +64,7 @@ Vagrant.configure("2") do |config|
           ansible.limit = 'all,localhost'
           ansible.raw_ssh_args = ["-o IdentityFile=~/.ssh/id_rsa"]
           ansible.host_vars = host_vars
+          ansible.extra_vars = 'config.yml'
         end
       end
     end
