@@ -3,6 +3,8 @@
   hosts: first_node
 
   vars:
+    artifacts_dir: "{{ (playbook_dir + '/../artifacts') | realpath }}"
+
     cluster_subdomain: example.org
     storage_metadata_replicas: 3
     storage_data_replicas: 3

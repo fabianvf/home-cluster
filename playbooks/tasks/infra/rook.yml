@@ -150,7 +150,7 @@
         namespace: rook-ceph
       spec:
         rules:
-        - host: rook-ceph.example.org
+        - host: rook-ceph.{{ cluster_subdomain }}
           http:
             paths:
             - path: /
@@ -191,3 +191,29 @@
     name: test-pvc
     namespace: rook-ceph
     state: absent
+
+- name: Get dashboard password secret
+  k8s_info:
+    api_version: v1
+    kind: Secret
+    name: rook-ceph-dashboard-password
+    namespace: rook-ceph
+  register: k8s_dashboard_password
+  no_log: True
+
+- name: Write dashboard secret to artifacts
+  copy:
+    content: '{{ k8s_dashboard_password.resources.0.data.password | b64decode }}'
+    dest: '{{ artifacts_dir }}/rook_ceph_dashboard_password.txt'
+  no_log: True
+  delegate_to: localhost
+
+- name: Store results
+  copy:
+    content: |
+      status: rook-ceph has been successfully configured.
+      manager_dashboard_url: 'rook-ceph.{{ cluster_subdomain }}'
+      username: admin
+      password_file: '{{ artifacts_dir }}/rook_ceph_dashboard_password.txt'
+    dest: '{{ artifacts_dir }}/results/01-storage.yml'
+  delegate_to: localhost

@@ -139,3 +139,14 @@
       kind: Service
     - api_version: networking.k8s.io/v1beta1
       kind: Ingress
+
+- name: Store results
+  copy:
+    content: |
+      status: ingress has been successfully configured.
+      address: {{ ip }}
+      metallb_ip_range: {{ metallb_ip_range }}
+    dest: '{{ artifacts_dir }}/results/01-ingress.yml'
+  vars:
+    ip: '{{ ingress_nginx_svc.resources.0.status.loadBalancer.ingress.0.ip }}'
+  delegate_to: localhost
