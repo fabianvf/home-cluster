@@ -3,19 +3,19 @@
 # User variables                                                          #
 ###########################################################################
 
-openshift_version: "3.11"
+# Change this to an IP range reserved on your network
+metallb_ip_range: '192.168.17.100-192.168.17.200'
 
-openshift_installer_image_org: openshift
-openshift_installer_image_tag: v{{ openshift_version }}
-pull_policy: Always
-ansible_ssh_extra_args : '-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
+# Make sure these numbers are <= the number of disks available in your cluster
+storage_data_replicas: 3
+storage_metadata_replicas: 3
 
-custom_route_script: |
-  #!/bin/bash -x
-  # -*- mode: sh; sh-indentation: 2 -*-
-  route del default gw 192.168.121.1 eth0
-  route add default gw 192.168.17.1 eth1
-  nmcli con mod eth1 ipv4.dns 192.168.17.1
+# Change this to the subdomain you're using for your cluster services
+cluster_subdomain: example.org
+
+helm_version: v3.2.1
+
+deploy_murmur: true
 
 ###########################################################################
 # Project variables                                                       #
@@ -23,5 +23,13 @@ custom_route_script: |
 # These should work as-is, modification is still possible but it will be  #
 # very easy to break things                                               #
 ###########################################################################
-openshift_host: 'https://{{ groups.first_master.0 }}:8443'
-master_subdomain: '{{ groups.first_master.0.split(".")[1:] | join(".") }}'
+master_node_schedulable: false
+
+# Set to true to create CephBlockStorage
+storage_block_create: false
+# Set to true to make block storage the default storageclass
+storage_block_default: false
+# Set to true to make a CephFilesystem
+storage_cephfs_create: true
+# Set to true to make cephfs the default storageclass
+storage_cephfs_default: true

@@ -3,6 +3,7 @@
   hosts: first_node
 
   vars:
+    cluster_subdomain: example.org
     storage_metadata_replicas: 3
     storage_data_replicas: 3
     storage_block_create: false

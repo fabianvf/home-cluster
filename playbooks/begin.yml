@@ -2,6 +2,9 @@
 - hosts: first_node
   become: yes
 
+  vars:
+    helm_version: v3.2.1
+
   tasks:
     - name: Install epel-release
       yum:
@@ -17,7 +20,7 @@
 
     - name: Install Helm
       unarchive:
-        src: https://get.helm.sh/helm-v3.2.1-linux-amd64.tar.gz
+        src: https://get.helm.sh/helm-{{ helm_version }}-linux-amd64.tar.gz
         dest: /usr/bin
         remote_src: yes
         extra_opts:

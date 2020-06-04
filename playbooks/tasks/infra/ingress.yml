@@ -95,13 +95,13 @@
       apiVersion: networking.k8s.io/v1beta1
       kind: Ingress
       metadata:
-        name: example-ingress
+        name: web
         namespace: ingress-nginx
         annotations:
           nginx.ingress.kubernetes.io/rewrite-target: /$1
       spec:
         rules:
-        - host: hello-world.example.org
+        - host: hello-world.{{ cluster_subdomain }}
           http:
             paths:
             - path: /
@@ -129,15 +129,12 @@
   community.kubernetes.k8s:
     api_version: '{{ item.api_version }}'
     kind: '{{ item.kind }}'
-    name: '{{ item.name }}'
+    name: web
     namespace: ingress-nginx
   loop:
     - api_version: apps/v1
       kind: Deployment
-      name: web
     - api_version: v1
       kind: Service
-      name: web
     - api_version: networking.k8s.io/v1beta1
       kind: Ingress
-      name: example-ingress

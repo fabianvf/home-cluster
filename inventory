@@ -4,13 +4,8 @@ node1.example.org
 
 [first_node:vars]
 kubernetes_master=true
-master_node_schedulable=false
-storage_data_replicas=3
-storage_metadata_replicas=3
-# Change this to an IP range reserved on your network
-metallb_ip_range=192.168.17.100-192.168.17.200
 
-# All nodes go here
+# Fill in with the hostnames of all your nodes
 [nodes]
 node1.example.org
 node2.example.org
