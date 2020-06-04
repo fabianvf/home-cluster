@@ -5,13 +5,6 @@
     name: epel-release
     state: latest
 
-- name: Install python dependencies
-  yum:
-    name:
-      - libselinux-python
-      - python-openshift
-    state: latest
-
 - name: Disable swap
   command: swapoff -a
 

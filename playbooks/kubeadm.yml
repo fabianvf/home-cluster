@@ -13,15 +13,6 @@
     master_node_schedulable: false
 
   tasks:
-    - name: Install Helm
-      unarchive:
-        src: https://get.helm.sh/helm-v3.2.1-linux-amd64.tar.gz
-        dest: /usr/bin
-        remote_src: yes
-        extra_opts:
-          - "--strip-components=1"
-          - "linux-amd64/helm"
-
     - name: Verify connection to gcr.io image registry
       command: kubeadm config images pull
 

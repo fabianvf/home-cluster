@@ -142,6 +142,8 @@
       - 'status.phase=Running'
   register: murmur_pods
   until: murmur_pods.resources
+  retries: 120
+  delay: 30
 
 - name: Generate a SuperUser password
   community.kubernetes.k8s_exec:
