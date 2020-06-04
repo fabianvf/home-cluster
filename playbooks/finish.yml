@@ -1,9 +1,24 @@
 ---
 - hosts: first_node
 
+  vars:
+    artifacts_dir: "{{ (playbook_dir + '/../artifacts') | realpath }}"
+
   tasks:
-    - name: Retrieve admin kubeconfig and store it at {{ playbook_dir }}/../kubeconfig
+    - name: Retrieve admin kubeconfig and store it at {{ playbook_dir }}/../artifacts/kubeconfig
       fetch:
-        dest: '{{ playbook_dir }}/../kubeconfig'
+        dest: '{{ artifacts_dir }}/kubeconfig'
         src: /root/.kube/config
         flat: yes
+
+- hosts: localhost
+
+  vars:
+    artifacts_dir: "{{ (playbook_dir + '/../artifacts') | realpath }}"
+
+  tasks:
+    - name: Report results
+      debug:
+        msg: '{{ item | from_yaml }}'
+      with_fileglob: '{{ artifacts_dir }}/results/*.yml'
+      delegate_to: localhost

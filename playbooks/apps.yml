@@ -4,6 +4,7 @@
 
   vars:
     deploy_murmur: true
+    artifacts_dir: "{{ (playbook_dir + '/../artifacts') | realpath }}"
 
   tasks:
     - import_tasks: tasks/apps/murmur.yml
