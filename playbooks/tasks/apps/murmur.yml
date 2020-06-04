@@ -165,3 +165,4 @@
   vars:
     ip: '{{ murmur_udp.resources.0.status.loadBalancer.ingress.0.ip }}'
     password_file: '{{ artifacts_dir }}/mumble_password.txt'
+  delegate_to: localhost

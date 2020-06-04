@@ -5,7 +5,7 @@
     artifacts_dir: "{{ (playbook_dir + '/../artifacts') | realpath }}"
 
   tasks:
-    - name: Retrieve admin kubeconfig and store it at {{ playbook_dir }}/../artifacts/kubeconfig
+    - name: Retrieve admin kubeconfig and store it at {{ artifacts_dir }}/kubeconfig
       fetch:
         dest: '{{ artifacts_dir }}/kubeconfig'
         src: /root/.kube/config
@@ -17,8 +17,14 @@
     artifacts_dir: "{{ (playbook_dir + '/../artifacts') | realpath }}"
 
   tasks:
+    - name: Assemble results
+      assemble:
+        src: '{{ artifacts_dir }}/results'
+        dest: '{{ artifacts_dir }}/report.yml'
+        delimiter: "\n---\n"
+
     - name: Report results
       debug:
-        msg: '{{ item | from_yaml }}'
-      with_fileglob: '{{ artifacts_dir }}/results/*.yml'
-      delegate_to: localhost
+        msg: '{{ lookup("file", report) }}'
+      vars:
+        report: '{{ artifacts_dir }}/report.yml'
