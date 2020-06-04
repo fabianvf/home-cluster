@@ -8,3 +8,4 @@ foreman.index
 foreman.params
 inventory/home_cluster_hosts
 inventory/foreman.ini
+artifacts/
