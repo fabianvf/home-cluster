@@ -1,2 +1,22 @@
-[first_master]
-master.example.org ansible_ssh_user=root ansible_host=192.168.17.11
+# Fill in with the hostname of your master node
+[first_node]
+node1.example.org
+
+[first_node:vars]
+kubernetes_master=true
+master_node_schedulable=false
+storage_data_replicas=3
+storage_metadata_replicas=3
+# Change this to an IP range reserved on your network
+metallb_ip_range=192.168.17.100-192.168.17.200
+
+# All nodes go here
+[nodes]
+node1.example.org
+node2.example.org
+node3.example.org
+node4.example.org
+
+
+[nodes:vars]
+kubernetes_node=true
