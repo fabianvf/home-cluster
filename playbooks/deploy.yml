@@ -2,6 +2,7 @@
 
 - import_playbook: begin.yml
 - import_playbook: kubeadm.yml
+- import_playbook: node_status.yml
 - import_playbook: infra.yml
 - import_playbook: apps.yml
 - import_playbook: finish.yml
