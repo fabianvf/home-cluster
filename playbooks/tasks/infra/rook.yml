@@ -157,3 +157,37 @@
               backend:
                 serviceName: rook-ceph-mgr-dashboard
                 servicePort: dashboard
+
+- name: Create a test PVC
+  community.kubernetes.k8s:
+    definition:
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: test-pvc
+        namespace: rook-ceph
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+
+- name: Wait for test PVC to become bound
+  community.kubernetes.k8s_info:
+    api_version: v1
+    kind: PersistentVolumeClaim
+    name: test-pvc
+    namespace: rook-ceph
+  register: rook_test_pvc
+  until: rook_test_pvc.resources.0.status.phase == "Bound"
+  retries: 120
+  delay: 30
+
+- name: Delete the test PVC
+  community.kubernetes.k8s:
+    api_version: v1
+    kind: PersistentVolumeClaim
+    name: test-pvc
+    namespace: rook-ceph
+    state: absent

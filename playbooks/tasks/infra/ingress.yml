@@ -131,6 +131,7 @@
     kind: '{{ item.kind }}'
     name: web
     namespace: ingress-nginx
+    state: absent
   loop:
     - api_version: apps/v1
       kind: Deployment
