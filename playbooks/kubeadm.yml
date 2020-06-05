@@ -15,6 +15,7 @@
   tasks:
     - name: Verify connection to gcr.io image registry
       command: kubeadm config images pull
+      changed_when: false
 
     - name: Check component statuses
       community.kubernetes.k8s_info:
@@ -64,27 +65,36 @@
       loop: '{{ lookup("url", "https://docs.projectcalico.org/v3.14/manifests/calico.yaml", split_lines=False) | from_yaml_all | list }}'
       when: item is not none
 
-    - name: Get kubeadm join command
-      command: kubeadm token create --print-join-command
-      register: kubeadm_join_cmd_raw
-
-    - name: Set kubeadm join command
-      set_fact:
-        kubeadm_join_cmd: '{{ kubeadm_join_cmd_raw.stdout }}'
-
 - name: Join remaining nodes to cluster
   hosts: nodes,!first_node
 
   vars:
-    kubeadm_join_cmd: '{{ hostvars[groups["first_node"].0].kubeadm_join_cmd }}'
+    kubeadm_join_cmd: '{{ kubeadm_join_cmd_raw.stdout }}'
+    kubeadm_token_id: "{{ kubeadm_join_cmd_raw.stdout | regex_replace('.*--token ([A-z0-9]*)\\..*', '\\1') }}"
 
   tasks:
+
+    - name: Get node
+      community.kubernetes.k8s_info:
+        api_version: v1
+        kind: Node
+        name: '{{ inventory_hostname }}'
+      delegate_to: '{{ groups.first_node.0 }}'
+      register: kubeadm_node
+
+    - name: Get kubeadm join command
+      command: kubeadm token create --print-join-command
+      delegate_to: '{{ groups.first_node.0 }}'
+      register: kubeadm_join_cmd_raw
+      when: not kubeadm_node.resources
+
     - name: Join node to cluster
       command: '{{ kubeadm_join_cmd }}'
       args:
         creates: /etc/kubernetes/kubelet.conf
+      when: not kubeadm_node.resources
 
-    - name: Turn node into a worker
+    - name: Ensure node is a worker
       k8s:
         definition:
           apiVersion: v1
@@ -94,3 +104,8 @@
             labels:
               node-role.kubernetes.io/worker: ""
       delegate_to: '{{ groups.first_node.0 }}'
+
+    - name: Delete kubeadm join token
+      command: kubeadm token delete {{ kubeadm_token_id }}
+      delegate_to: '{{ groups.first_node.0 }}'
+      when: not kubeadm_node.resources

@@ -9,14 +9,14 @@
     - name: Install epel-release
       yum:
         name: epel-release
-        state: latest
+        state: present
 
     - name: Install python dependencies for modules
       yum:
         name:
           - libselinux-python
           - python-openshift
-        state: latest
+        state: present
 
     - name: Install Helm
       unarchive:
