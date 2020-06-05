@@ -119,7 +119,7 @@
           activeStandby: true
   when: storage_cephfs_create
 
-- name: Create Ceph block storageclass
+- name: Create Ceph FileSystem storageclass
   community.kubernetes.k8s:
     definition:
       apiVersion: storage.k8s.io/v1
