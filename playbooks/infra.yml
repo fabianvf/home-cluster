@@ -5,13 +5,6 @@
   vars:
     artifacts_dir: "{{ (playbook_dir + '/../artifacts') | realpath }}"
 
-    cluster_subdomain: example.org
-    storage_metadata_replicas: 3
-    storage_data_replicas: 3
-    storage_block_create: false
-    storage_block_default: false
-    storage_cephfs_create: true
-    storage_cephfs_default: true
   tasks:
     - name: deploy ingress-nginx
       import_role:
@@ -33,6 +26,41 @@
         ip: '{{ ingress_nginx_svc.resources.0.status.loadBalancer.ingress.0.ip }}'
       delegate_to: localhost
 
-    - import_tasks: tasks/infra/rook.yml
+    - name: deploy rook-ceph
+      import_role:
+        name: k8s-rook-ceph
+
+    - name: verify volume provisioning is working
+      import_role:
+        name: k8s-rook-ceph
+        tasks_from: verify.yml
+
+    - name: Get rook-ceph dashboard password secret
+      k8s_info:
+        api_version: v1
+        kind: Secret
+        name: rook-ceph-dashboard-password
+        namespace: rook-ceph
+      register: k8s_dashboard_password
+      no_log: True
+
+    - name: Write dashboard secret to artifacts
+      copy:
+        content: '{{ k8s_dashboard_password.resources.0.data.password | b64decode }}'
+        dest: '{{ artifacts_dir }}/rook_ceph_dashboard_password.txt'
+      no_log: True
+      delegate_to: localhost
+
+    - name: Store results
+      copy:
+        content: |
+          status: rook-ceph has been successfully configured.
+          manager_dashboard_url: 'rook-ceph.{{ cluster_subdomain }}'
+          username: admin
+          password_file: '{{ artifacts_dir }}/rook_ceph_dashboard_password.txt'
+        dest: '{{ artifacts_dir }}/results/01-storage.yml'
+      delegate_to: localhost
+
+
     # TODO: Configure velero backup onto minio NFS gateway
     # - import_tasks: tasks/infra/velero.yml
