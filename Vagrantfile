@@ -41,6 +41,8 @@ Vagrant.configure("2") do |config|
 
       node.vm.provider :libvirt do |domain|
         domain.storage :file, :size => '10G', :type => 'raw'
+        domain.storage :file, :size => '10G', :type => 'raw' if nodes.length() < 3
+        domain.storage :file, :size => '10G', :type => 'raw' if nodes.length() < 2
       end
       if idx == nodes.size - 1
         # Kick off provisioning
