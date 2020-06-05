@@ -57,6 +57,7 @@ There are a few environment variables that can be set to alter the behavior of t
 |NUM_NODES | number of openshift nodes to bring up|
 |VERBOSITY | verbosity level to run Ansible (ie, `v`, `vv`, `vvv`)|
 |PLAYBOOK | path to a specific playbook to run during provisioning. Useful if you need to rerun something.|
+|NODE_RAM | amount of memory to dedicate to each node (in MiB) (default 2000)|
 
 
 ## Real deployment

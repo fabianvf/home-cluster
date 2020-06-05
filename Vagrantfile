@@ -6,6 +6,7 @@ Vagrant.configure("2") do |config|
   nodes = (1..(ENV["NUM_NODES"]||1).to_i).map {|i| "node#{i}.example.org"}
   verbosity = ENV["VERBOSITY"]||""
   playbook = ENV["PLAYBOOK"]||"playbooks/deploy.yml"
+  node_ram = (ENV["NODE_RAM"]||2000).to_i
 
   config.hostmanager.enabled = true
   config.hostmanager.manage_host = true
@@ -75,7 +76,7 @@ Vagrant.configure("2") do |config|
 
   config.vm.provider :libvirt do |libvirt|
     libvirt.driver = "kvm"
-    libvirt.memory = 2000
+    libvirt.memory = node_ram
     libvirt.cpus = `grep -c ^processor /proc/cpuinfo`.to_i
     libvirt.qemu_use_session = false
   end
