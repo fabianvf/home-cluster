@@ -1,12 +1,25 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+
+def recommended_node_ram(num_nodes)
+  free_ram = %x(free -m).split(" ")[9].to_i
+  max_allowed = (free_ram * 0.9).to_i
+  if num_nodes == 1
+    return 4000 if 4000 < max_allowed else max_allowed
+  end
+
+  return 2000 if num_nodes * 2000 < max_allowed
+  return (max_allowed / num_nodes).to_i
+end
+
 Vagrant.configure("2") do |config|
 
   nodes = (1..(ENV["NUM_NODES"]||1).to_i).map {|i| "node#{i}.example.org"}
   verbosity = ENV["VERBOSITY"]||""
   playbook = ENV["PLAYBOOK"]||"playbooks/deploy.yml"
-  node_ram = (ENV["NODE_RAM"]||2000).to_i
+  node_ram = (ENV["NODE_RAM"]||recommended_node_ram(nodes.length())).to_i
+  puts "Allocating #{node_ram}MiB RAM to each node in the cluster"
 
   config.hostmanager.enabled = true
   config.hostmanager.manage_host = true
