@@ -11,6 +11,7 @@
 
   vars:
     master_node_schedulable: false
+    artifacts_dir: "{{ (playbook_dir + '/../artifacts') | realpath }}"
 
   tasks:
     - name: Verify connection to gcr.io image registry
@@ -40,6 +41,12 @@
         src: /etc/kubernetes/admin.conf
         dest: /root/.kube/config
         remote_src: yes
+
+    - name: Retrieve admin kubeconfig and store it at {{ artifacts_dir }}/kubeconfig
+      fetch:
+        dest: '{{ artifacts_dir }}/kubeconfig'
+        src: /root/.kube/config
+        flat: yes
 
     - name: Get list of nodes
       community.kubernetes.k8s_info:

@@ -1,16 +1,4 @@
 ---
-- hosts: first_node
-
-  vars:
-    artifacts_dir: "{{ (playbook_dir + '/../artifacts') | realpath }}"
-
-  tasks:
-    - name: Retrieve admin kubeconfig and store it at {{ artifacts_dir }}/kubeconfig
-      fetch:
-        dest: '{{ artifacts_dir }}/kubeconfig'
-        src: /root/.kube/config
-        flat: yes
-
 - hosts: localhost
 
   vars:
