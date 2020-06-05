@@ -56,13 +56,13 @@
               ports:
               - containerPort: 64738
               readinessProbe:
-                tcpSocket:
-                  port: 64738
+                exec:
+                  command: ["nc", "-u", "-z", "-w", "3", "localhost", "64738"]
                 initialDelaySeconds: 5
                 periodSeconds: 10
               livenessProbe:
-                tcpSocket:
-                  port: 64738
+                exec:
+                  command: ["nc", "-u", "-z", "-w", "3", "localhost", "64738"]
                 initialDelaySeconds: 30
                 periodSeconds: 10
               volumeMounts:
