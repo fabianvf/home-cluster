@@ -7,32 +7,12 @@
     artifacts_dir: "{{ (playbook_dir + '/../artifacts') | realpath }}"
 
   tasks:
-    - name: deploy murmur server
+    - name: Deploy murmur server
       import_role:
         name: k8s-murmur
-      when: deploy_murmur
-
-    - name: Get murmur pod
-      community.kubernetes.k8s_info:
-        api_version: v1
-        kind: Pod
-        namespace: murmur
-        label_selectors:
-          - 'app=murmur'
-        field_selectors:
-          - 'status.phase=Running'
-      register: murmur_pods
-      until: murmur_pods.resources
-      retries: 120
-      delay: 30
-
-    - name: Generate a SuperUser password
-      community.kubernetes.k8s_exec:
-        namespace: murmur
-        pod: '{{ murmur_pods.resources.0.metadata.name }}'
-        command: ./murmur.x86 -ini /opt/murmur/config/murmur.ini -supw {{ lookup('password', password_opts) }}
       vars:
-        password_opts: '{{ artifacts_dir }}/mumble_password.txt chars=ascii_letters,digits'
+        murmur_password_file: '{{ artifacts_dir }}/mumble_password.txt'
+      when: deploy_murmur
 
     - name: Store results
       copy:

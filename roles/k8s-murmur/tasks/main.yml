@@ -129,3 +129,7 @@
             protocol: TCP
         selector:
           app: murmur
+
+- name: Set SuperUser password
+  import_tasks: set_superuser_password.yml
+  when: murmur_password_file is defined

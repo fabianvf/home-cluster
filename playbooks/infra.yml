@@ -55,9 +55,9 @@
       copy:
         content: |
           status: rook-ceph has been successfully configured.
-          manager_dashboard_url: 'rook-ceph.{{ cluster_subdomain }}'
+          manager_dashboard_url: rook-ceph.{{ cluster_subdomain }}
           username: admin
-          password_file: '{{ artifacts_dir }}/rook_ceph_dashboard_password.txt'
+          password_file: {{ artifacts_dir }}/rook_ceph_dashboard_password.txt
         dest: '{{ artifacts_dir }}/results/01-storage.yml'
       delegate_to: localhost
 
