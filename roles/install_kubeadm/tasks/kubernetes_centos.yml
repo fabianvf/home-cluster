@@ -17,7 +17,7 @@
       - kubeadm
       - kubectl
     disable_excludes: kubernetes
-    state: latest
+    state: present
 
 - name: Start kubelet
   systemd:

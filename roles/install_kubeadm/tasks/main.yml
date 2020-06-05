@@ -1,12 +1,12 @@
 ---
-
 - name: Install epel-release
   yum:
     name: epel-release
-    state: latest
+    state: present
 
 - name: Disable swap
   command: swapoff -a
+  tags: ['skip_ansible_lint']
 
 - name: Disable swap on reboot
   replace:
@@ -16,6 +16,7 @@
 
 - name: Disable selinux
   command: setenforce 0
+  tags: ['skip_ansible_lint']
 
 - name: Disable selinux on reboot
   selinux:

@@ -13,9 +13,11 @@
   loop:
     - inet.bridge.bridge-nf-call-ip6tables
     - net.bridge.bridge-nf-call-iptables
+  register: sysctl_result
 
 - name: reload sysctl
   command: sysctl --system
+  when: sysctl_result is changed
 
 - name: Open ports for Kubernetes masters
   firewalld:

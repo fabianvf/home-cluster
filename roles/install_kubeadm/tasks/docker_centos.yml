@@ -4,17 +4,12 @@
       - yum-utils
       - device-mapper-persistent-data
       - lvm2
-    state: latest
+    state: present
 
 - name: Enable docker-ce repo
   get_url:
     url: https://download.docker.com/linux/centos/docker-ce.repo
     dest: /etc/yum.repos.d/docker-ce.repo
-
-- name: Update packages
-  yum:
-    name: '*'
-    state: latest
 
 - name: Install proper versions of Docker
   yum:
