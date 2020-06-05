@@ -8,11 +8,11 @@
   tasks:
     - name: deploy ingress-nginx
       import_role:
-        name: k8s-nginx-ingress
+        name: k8s_nginx_ingress
 
     - name: verify ingress is working
       import_role:
-        name: k8s-nginx-ingress
+        name: k8s_nginx_ingress
         tasks_from: verify.yml
 
     - name: Store results
@@ -28,11 +28,11 @@
 
     - name: deploy rook-ceph
       import_role:
-        name: k8s-rook-ceph
+        name: k8s_rook_ceph
 
     - name: verify volume provisioning is working
       import_role:
-        name: k8s-rook-ceph
+        name: k8s_rook_ceph
         tasks_from: verify.yml
 
     - name: Get rook-ceph dashboard password secret

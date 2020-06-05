@@ -9,7 +9,7 @@
   tasks:
     - name: Deploy murmur server
       import_role:
-        name: k8s-murmur
+        name: k8s_murmur
       vars:
         murmur_password_file: '{{ artifacts_dir }}/mumble_password.txt'
       when: deploy_murmur
