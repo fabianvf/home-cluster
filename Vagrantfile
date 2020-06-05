@@ -52,10 +52,9 @@ Vagrant.configure("2") do |config|
             "first_node" => nodes[0],
             "first_node:vars" => {
               "kubernetes_master" => true,
-              "master_node_schedulable" => nodes.length() == 1,
               "metallb_ip_range" => "192.168.17.100-192.168.17.200",
-              "storage_data_replicas" => nodes.length(),
-              "storage_metadata_replicas" => nodes.length(),
+              "storage_data_replicas" => 3,
+              "storage_metadata_replicas" => 3,
             },
             "nodes" => nodes,
             "nodes:vars" => {"kubernetes_node" => true},
