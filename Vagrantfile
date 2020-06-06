@@ -49,6 +49,29 @@ Vagrant.configure("2") do |config|
       node.vm.hostname = name
       node.vm.synced_folder '.', '/vagrant', disabled: true
 
+      if idx == 0
+        # Configure NFS on master to test out backups
+        config.vm.provision :shell, :inline => <<-EOF
+          yum install -y nfs-utils
+          mkdir -p /export/backup
+          chmod -R 777 /export
+          chown nfsnobody:nfsnobody /export
+
+          systemctl enable rpcbind
+          systemctl enable nfs-server
+          systemctl enable nfs-lock
+          systemctl enable nfs-idmap
+          systemctl start rpcbind
+          systemctl start nfs-server
+          systemctl start nfs-lock
+          systemctl start nfs-idmap
+
+          echo "/export    $(ip addr show eth1 | grep 'inet ' | awk '{printf $2}' | awk -F '/' '{print $1}')(rw,sync,no_root_squash,no_all_squash)" > /etc/exports
+
+          systemctl restart nfs-server
+        EOF
+      end
+
       node.vm.network :private_network,
         :ip => "192.168.17.#{10 + idx}",
         :libvirt__dhcp_enabled => false
@@ -68,6 +91,8 @@ Vagrant.configure("2") do |config|
               "metallb_ip_range" => "192.168.17.100-192.168.17.200",
               "storage_data_replicas" => 3,
               "storage_metadata_replicas" => 3,
+              "nfs_backup_share_path": "/export/backup",
+              "nfs_backup_server": "node1.example.org",
             },
             "nodes" => nodes,
             "nodes:vars" => {"kubernetes_node" => true},

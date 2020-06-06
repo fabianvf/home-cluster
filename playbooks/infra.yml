@@ -63,4 +63,5 @@
 
 
     # TODO: Configure velero backup onto minio NFS gateway
-    # - import_tasks: tasks/infra/velero.yml
+    - import_role:
+        name: k8s_velero

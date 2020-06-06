@@ -14,7 +14,7 @@
 # cluster_subdomain: example.org
 
 # At least one of these must be enabled and set to default or the playbooks
-# will fail, as they assume that PVs can be dynamically provisioned.
+#   will fail, as they assume that PVs can be dynamically provisioned.
 # Set to true to create CephBlockStorage
 # storage_block_create: false
 # Set to true to make block storage the default storageclass
@@ -23,6 +23,11 @@
 # storage_cephfs_create: true
 # Set to true to make cephfs the default storageclass
 # storage_cephfs_default: true
+
+# Change these to configure cluster backup to NFS. If you don't set these no backup
+#   solution will be deployed.
+# nfs_backup_share_path: /export/backup
+# nfs_backup_server: nfs.example.org
 
 helm_version: v3.2.1
 
@@ -40,3 +45,19 @@ helm_version: v3.2.1
 master_node_schedulable: '{{ (groups.nodes | length) == 1 }}'
 
 artifacts_dir: "{{ (playbook_dir + '/../artifacts') | realpath }}"
+backup_nfs_pv:
+  apiVersion: v1
+  kind: PersistentVolume
+  metadata:
+    name: backup
+  spec:
+    accessModes:
+    - ReadWriteMany
+    capacity:
+      # just a big number, doesn't actually matter
+      storage: 100Ti
+    nfs:
+      path: '{{ nfs_backup_share_path }}'
+      server: '{{ nfs_backup_server }}'
+    persistentVolumeReclaimPolicy: Recycle
+    storageClassName: nfs

@@ -1,0 +1,62 @@
+---
+
+- name: Add stable chart repo
+  community.kubernetes.helm_repository:
+    name: stable
+    repo_url: "https://kubernetes-charts.storage.googleapis.com"
+
+- name: Create namespace
+  community.kubernetes.k8s:
+    api_version: v1
+    kind: Namespace
+    name: velero-backup
+
+- name: Create backup NFS PV
+  community.kubernetes.k8s:
+    definition: '{{ backup_nfs_pv }}'
+
+- name: Create backup NFS PVC
+  community.kubernetes.k8s:
+    definition:
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: minio-nfs
+        namespace: velero-backup
+      spec:
+        accessModes:
+          - ReadWriteMany
+        resources:
+          requests:
+            storage: '{{ backup_nfs_pv.spec.capacity.storage }}'
+        storageClassName: '{{ backup_nfs_pv.spec.storageClassName }}'
+        volumeName: '{{ backup_nfs_pv.metadata.name }}'
+
+- block:
+  - name: Install MinIO as a NAS gateway
+    community.kubernetes.helm:
+      name: minio
+      namespace: velero-backup
+      chart_ref: stable/minio
+      values:
+        nasgateway:
+          enabled: true
+        persistence:
+          existingClaim: minio-nfs
+        ingress:
+          enabled: true
+          hosts: 
+            - minio.{{ cluster_subdomain }}
+        clusterDomain: '{{ cluster_subdomain }}'
+      wait: yes
+
+  rescue:
+    - name: Uninstall failed minio relesae
+      community.kubernetes.helm:
+        name: minio
+        namespace: velero-backup
+        state: absent
+
+    - name: Failed to install minio
+      fail:
+        msg: 'Failed in task {{ ansible_failed_task.name }}, result: {{ ansible_failed_result }}'
