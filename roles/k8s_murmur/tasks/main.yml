@@ -43,6 +43,8 @@
           metadata:
             labels:
               app: murmur
+            annotations:
+              backup.velero.io/backup-volumes: murmur-config,murmur-db
           spec:
             containers:
             - image: goofball222/murmur:latest

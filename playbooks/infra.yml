@@ -61,7 +61,5 @@
         dest: '{{ artifacts_dir }}/results/01-storage.yml'
       delegate_to: localhost
 
-
-    # TODO: Configure velero backup onto minio NFS gateway
     - import_role:
         name: k8s_velero

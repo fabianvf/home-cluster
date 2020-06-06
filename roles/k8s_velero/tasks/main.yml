@@ -1,4 +1,12 @@
 ---
+- name: Install Velero CLI
+  unarchive:
+    src: https://github.com/vmware-tanzu/velero/releases/download/{{ velero_version }}/velero-{{ velero_version }}-linux-amd64.tar.gz
+    dest: /usr/bin
+    remote_src: yes
+    extra_opts:
+      - "--strip-components=1"
+      - "velero-{{ velero_version }}-linux-amd64/velero"
 
 - name: Add stable chart repo
   community.kubernetes.helm_repository:
@@ -9,7 +17,7 @@
   community.kubernetes.k8s:
     api_version: v1
     kind: Namespace
-    name: velero-backup
+    name: velero
 
 - name: Create backup NFS PV
   community.kubernetes.k8s:
@@ -22,7 +30,7 @@
       kind: PersistentVolumeClaim
       metadata:
         name: minio-nfs
-        namespace: velero-backup
+        namespace: velero
       spec:
         accessModes:
           - ReadWriteMany
@@ -36,9 +44,17 @@
   - name: Install MinIO as a NAS gateway
     community.kubernetes.helm:
       name: minio
-      namespace: velero-backup
+      namespace: velero
       chart_ref: stable/minio
       values:
+        buckets:
+          - name: velero
+            policy: "none"
+            purge: false
+        defaultBucket:
+          enabled: yes
+          name: velero
+        replicas: 1
         nasgateway:
           enabled: true
         persistence:
@@ -48,15 +64,45 @@
           hosts: 
             - minio.{{ cluster_subdomain }}
         clusterDomain: '{{ cluster_subdomain }}'
+        secretKey: '{{ lookup("password", secret_key_opts)}}'
+        accessKey: '{{ lookup("password", access_key_opts) }}'
       wait: yes
+    vars:
+      secret_key_opts: "{{ artifacts_dir }}/minio_secret_key.txt chars=ascii_letters,digits length=40"
+      access_key_opts: "{{ artifacts_dir }}/minio_access_key.txt chars=ascii_letters,digits length=20"
 
   rescue:
-    - name: Uninstall failed minio relesae
+    - name: Uninstall failed minio release
       community.kubernetes.helm:
         name: minio
-        namespace: velero-backup
+        namespace: velero
         state: absent
 
     - name: Failed to install minio
       fail:
         msg: 'Failed in task {{ ansible_failed_task.name }}, result: {{ ansible_failed_result }}'
+
+- name: Create velero configuration directory
+  file:
+    path: /etc/velero/
+    state: directory
+
+- name: Create velero config
+  copy:
+    content: |
+      [default]
+      aws_access_key_id = {{ lookup('file', artifacts_dir + '/minio_access_key.txt') }}
+      aws_secret_access_key = {{ lookup('file', artifacts_dir + '/minio_secret_key.txt') }}
+    dest: /etc/velero/credentials-velero
+
+- name: Install velero
+  command: >
+    velero install
+    --provider aws
+    --plugins velero/velero-plugin-for-aws:v1.0.0
+    --bucket velero
+    --secret-file /etc/velero/credentials-velero
+    --use-volume-snapshots=false
+    --backup-location-config region=minio,s3ForcePathStyle="true",s3Url=http://minio.{{ cluster_subdomain }}
+    --use-restic
+    --wait
