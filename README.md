@@ -6,13 +6,16 @@ This is a repository of playbooks/scripts to deploy, configure, and manage a pri
 # Motivation
 My wife is a photographer, and generates between 1TB and 3TB of media per year. I am a software engineer working on OpenShift, and have a variety of applications running on our local network, spread around a ton of hardware. I'm sick of manually configuring/fixing things, and was hoping to leverage some of my professional experience to provide a secure local network backup system for my wife, and a good platform for hosting/running applications for me.
 
-# Roadmap
-- [x] Deployment of multi-node (single master) Kubernetes cluster
-- [x] Deployment of metallb and ingress-nginx for ingress
-- [x] Deployment of rook-ceph for storage
-  - [x] Configuration of rook/ceph for dynamic persistent volume provisioning
-- [x] Deployment and configuration of various services (see github issues for tracking of individual services)
-  - [x] Murmur (mumble server)
+# Functionality
+- Deployment of multi-node (single master) Kubernetes cluster
+- Deployment of metallb and ingress-nginx for ingress
+- Deployment of rook-ceph for storage
+  - Configuration of rook/ceph for dynamic persistent volume provisioning
+- Automatic cluster backups
+  - Deployment of minio as an NFS gateway
+  - Deployment of velero with scheduled backups to the minio gateway
+- Deployment and configuration of various services (see github issues for tracking of individual services)
+  - Murmur (mumble server)
 
 # Quickstart
 
