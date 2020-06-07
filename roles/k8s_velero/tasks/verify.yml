@@ -1,34 +1,123 @@
 ---
-- name: Create a test PVC
-  community.kubernetes.k8s:
-    definition:
-      apiVersion: v1
+- block:
+  - name: Create a test namespace
+    community.kubernetes.k8s:
+      api_version: v1
+      kind: Namespace
+      name: velero-test
+
+  - name: Create test PVC
+    community.kubernetes.k8s:
+      definition:
+        apiVersion: v1
+        kind: PersistentVolumeClaim
+        metadata:
+          name: test-velero
+          namespace: velero-test
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi
+
+  - name: Create test pod
+    community.kubernetes.k8s:
+      wait: yes
+      definition:
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+          namespace: velero-test
+          annotations:
+            backup.velero.io/backup-volumes: test-velero
+        spec:
+          containers:
+          - image: busybox
+            name: velero-test
+            command: ["sh", "-c", "while true; do ((cat /opt/test/text)||true) && sleep 3 ; done"]
+            volumeMounts:
+            - mountPath: /opt/test
+              name: test-velero
+          volumes:
+          - name: test-velero
+            persistentVolumeClaim:
+              claimName: test-velero
+
+  - name: Populate test volume
+    community.kubernetes.k8s_exec:
+      namespace: velero-test
+      pod: test
+      command: sh -c "echo 'hello world' > /opt/test/text"
+
+  - name: Wait for message to appear in pod log
+    community.kubernetes.k8s_log:
+      name: test
+      namespace: velero-test
+    register: test_pod_log
+    until: '"hello world" in test_pod_log.log'
+
+  - name: Create a backup of the test namespace
+    command: velero backup create test-backup --include-namespaces velero-test --wait
+    tags: ['skip_ansible_lint']
+
+  - name: Get PVC
+    k8s_info:
+      api_version: v1
       kind: PersistentVolumeClaim
-      metadata:
-        name: test-pvc
-        namespace: rook-ceph
-      spec:
-        accessModes:
-          - ReadWriteOnce
-        resources:
-          requests:
-            storage: 1Gi
+      name: test-velero
+      namespace: velero-test
+    register: test_pvc
 
-- name: Wait for test PVC to become bound
-  community.kubernetes.k8s_info:
-    api_version: v1
-    kind: PersistentVolumeClaim
-    name: test-pvc
-    namespace: rook-ceph
-  register: rook_test_pvc
-  until: rook_test_pvc.resources.0.status.phase == "Bound"
-  retries: 120
-  delay: 30
+  - name: Delete test namespace
+    community.kubernetes.k8s:
+      api_version: v1
+      kind: Namespace
+      name: velero-test
+      state: absent
+      wait: yes
 
-- name: Delete the test PVC
-  community.kubernetes.k8s:
-    api_version: v1
-    kind: PersistentVolumeClaim
-    name: test-pvc
-    namespace: rook-ceph
-    state: absent
+  - name: Delete volume backing pvc
+    community.kubernetes.k8s:
+      api_version: v1
+      kind: PersistentVolume
+      name: '{{ test_pvc.resources.0.spec.volumeName }}'
+      state: absent
+      wait: yes
+
+  - name: Restore the test namespace
+    command: velero restore create test-restore --from-backup test-backup --wait
+    tags: ['skip_ansible_lint']
+
+  - name: Wait for pod to come back up
+    k8s_info:
+      api_version: v1
+      kind: Pod
+      name: test
+      namespace: velero-test
+    register: test_pod
+    until: test_pod.resources and test_pod.resources.0.status.phase == "Running"
+    retries: 10
+    delay: 6
+
+  - name: Wait for message to appear in pod log
+    community.kubernetes.k8s_log:
+      name: test
+      namespace: velero-test
+    register: test_pod_log
+    until: '"hello world" in test_pod_log.log'
+
+  always:
+    - name: Delete velero backup
+      command: velero backup delete test-backup --confirm
+      tags: ['skip_ansible_lint']
+      ignore_errors: yes
+
+    - name: Delete test namespace
+      community.kubernetes.k8s:
+        api_version: v1
+        kind: Namespace
+        name: velero-test
+        state: absent
+        wait: yes

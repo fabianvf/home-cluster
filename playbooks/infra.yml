@@ -57,9 +57,35 @@
           status: rook-ceph has been successfully configured.
           manager_dashboard_url: rook-ceph.{{ cluster_subdomain }}
           username: admin
-          password_file: {{ artifacts_dir }}/rook_ceph_dashboard_password.txt
+          password: Stored in {{ artifacts_dir }}/rook_ceph_dashboard_password.txt
         dest: '{{ artifacts_dir }}/results/01-storage.yml'
       delegate_to: localhost
 
     - import_role:
         name: k8s_velero
+
+    - name: verify velero backups are working
+      import_role:
+        name: k8s_velero
+        tasks_from: verify.yml
+
+    - name: Create a velero backup schedule
+      command: >
+        velero schedule create cluster-backup
+        --schedule "{{ velero_backup_schedule }}"
+        --ttl {{ velero_backup_ttl }}h0m0s
+      register: result
+      failed_when: result is failed and 'already exists' not in result.stdout
+      changed_when: "'already exists' not in result.stdout"
+
+    - name: Store results
+      copy:
+        content: |
+          status: Velero backups to a minio NFS gateway have been successfully configured
+          backup_volume_name: {{ backup_nfs_pv.metadata.name }}
+          full_cluster_backup_schedule: {{ velero_backup_schedule }}
+          minio_address: minio.{{ cluster_subdomain }}
+          access_key: {{ lookup('file', artifacts_dir + '/minio_access_key.txt') }}
+          secret_key: Stored in {{ artifacts_dir }}/minio_secret_key.txt
+        dest: '{{ artifacts_dir }}/results/01-backups.yml'
+      delegate_to: localhost

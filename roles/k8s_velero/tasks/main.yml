@@ -61,10 +61,10 @@
           existingClaim: minio-nfs
         ingress:
           enabled: true
-          hosts: 
+          hosts:
             - minio.{{ cluster_subdomain }}
         clusterDomain: '{{ cluster_subdomain }}'
-        secretKey: '{{ lookup("password", secret_key_opts)}}'
+        secretKey: '{{ lookup("password", secret_key_opts) }}'
         accessKey: '{{ lookup("password", access_key_opts) }}'
       wait: yes
     vars:
@@ -95,6 +95,7 @@
       aws_secret_access_key = {{ lookup('file', artifacts_dir + '/minio_secret_key.txt') }}
     dest: /etc/velero/credentials-velero
 
+# TODO: make velero module?
 - name: Install velero
   command: >
     velero install
@@ -106,3 +107,4 @@
     --backup-location-config region=minio,s3ForcePathStyle="true",s3Url=http://minio.{{ cluster_subdomain }}
     --use-restic
     --wait
+  tags: ['skip_ansible_lint']

@@ -31,6 +31,12 @@
 
 helm_version: v3.2.1
 
+# Alter schedule for backup using cron syntax. Default is once per day.
+velero_backup_schedule: '0 7 * * *'
+
+# How long to save backups, in hours. Defaults to two weeks.
+velero_backup_ttl: 336
+
 # Set these to false to skip deployment
 # deploy_murmur: false
 
@@ -45,6 +51,7 @@ helm_version: v3.2.1
 master_node_schedulable: '{{ (groups.nodes | length) == 1 }}'
 
 artifacts_dir: "{{ (playbook_dir + '/../artifacts') | realpath }}"
+
 backup_nfs_pv:
   apiVersion: v1
   kind: PersistentVolume
