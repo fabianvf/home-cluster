@@ -1,0 +1,3 @@
+---
+cluster_subdomain: example.org
+metallb_ip_range: nil

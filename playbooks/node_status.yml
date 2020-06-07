@@ -1,0 +1,47 @@
+---
+- name: Wait for nodes to become ready
+  hosts: first_node
+
+  vars:
+    artifacts_dir: "{{ (playbook_dir + '/../artifacts') | realpath }}"
+
+  tasks:
+    - name: Retrieve nodes
+      k8s_info:
+        api_version: v1
+        kind: Node
+      register: k8s_nodes
+
+    - name: Wait for all nodes to reach Ready status
+      k8s:
+        api_version: v1
+        kind: Node
+        name: '{{ item.metadata.name }}'
+        wait: yes
+        wait_timeout: 600
+        wait_condition:
+          status: "True"
+          type: Ready
+      loop: '{{ k8s_nodes.resources }}'
+
+    - name: Retrieve nodes
+      k8s_info:
+        api_version: v1
+        kind: Node
+      register: k8s_nodes
+
+    - name: Report status
+      copy:
+        content: |
+          status: {{ item.metadata.name }} reported ready
+          addresses:
+            {{ item.status.addresses | to_nice_yaml | indent(2)  }}
+          capacity:
+            {{ item.status.capacity | to_nice_yaml | indent(2) }}
+          allocatable:
+            {{ item.status.allocatable | to_nice_yaml | indent(2) }}
+          node_info:
+            {{ item.status.nodeInfo | to_nice_yaml | indent(2) }}
+        dest: '{{ artifacts_dir }}/results/00-{{ item.metadata.name }}.yml'
+      loop: '{{ k8s_nodes.resources }}'
+      delegate_to: localhost

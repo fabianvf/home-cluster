@@ -1,2 +1,17 @@
-[first_master]
-master.example.org ansible_ssh_user=root ansible_host=192.168.17.11
+# Fill in with the hostname of your master node
+[first_node]
+node1.example.org
+
+[first_node:vars]
+kubernetes_master=true
+
+# Fill in with the hostnames of all your nodes
+[nodes]
+node1.example.org
+node2.example.org
+node3.example.org
+node4.example.org
+
+
+[nodes:vars]
+kubernetes_node=true

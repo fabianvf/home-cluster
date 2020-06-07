@@ -1,7 +1,0 @@
-FROM alpine:latest
-
-RUN apk update --no-cache && apk add python3 py3-pip --no-cache
-
-RUN pip3 install ansible-tower-cli --no-cache-dir
-
-ENTRYPOINT ["/usr/bin/tower-cli"]

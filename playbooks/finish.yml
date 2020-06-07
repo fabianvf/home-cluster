@@ -1,0 +1,19 @@
+---
+- hosts: localhost
+
+  vars:
+    artifacts_dir: "{{ (playbook_dir + '/../artifacts') | realpath }}"
+
+  tasks:
+    - name: Assemble results
+      assemble:
+        src: '{{ artifacts_dir }}/results'
+        dest: '{{ artifacts_dir }}/report.yml'
+        delimiter: "\n---\n"
+        ignore_hidden: yes
+
+    - name: Report results
+      debug:
+        msg: '{{ lookup("file", report) }}'
+      vars:
+        report: '{{ artifacts_dir }}/report.yml'

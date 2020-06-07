@@ -1,6 +1,0 @@
----
-
-# any openshift-ansible variables to be overwritten go here
-# This file will be mounted into the install container and passed in with `--extra-vars`
-# This variable prevents it from failing when loading an empty file
-dummy_variable: false

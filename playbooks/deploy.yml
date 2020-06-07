@@ -1,6 +1,8 @@
 ---
-- import_playbook: prep_inventory.yml
-- import_playbook: bootstrap.yml
-- import_playbook: cluster_auth.yml
-# - import_playbook: storage.yml
-# - import_playbook: tower.yml
+
+- import_playbook: begin.yml
+- import_playbook: kubeadm.yml
+- import_playbook: node_status.yml
+- import_playbook: infra.yml
+- import_playbook: apps.yml
+- import_playbook: finish.yml

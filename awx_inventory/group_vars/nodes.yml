@@ -1,5 +1,0 @@
----
-
-# openshift_node_labels: {'region': 'primary', 'zone': 'default'}
-# openshift_node_kubelet_args: {volume-plugin-dir: [/etc/origin/kubelet-plugins/volume/exec], docker-disable-shared-pid: ["true"]}
-openshift_node_group_name: home-cluster-node

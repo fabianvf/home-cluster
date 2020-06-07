@@ -1,14 +1,29 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+
+def recommended_node_ram(num_nodes)
+  free_ram = %x(free -m).split(" ")[9].to_i
+  max_allowed = (free_ram * 0.9).to_i
+  if num_nodes == 1
+    return 4000 if 4000 < max_allowed else max_allowed
+  end
+
+  return 2000 if num_nodes * 2000 < max_allowed
+  return (max_allowed / num_nodes).to_i
+end
+
 Vagrant.configure("2") do |config|
 
-  nodes = (1..(ENV["NUM_NODES"]||3).to_i).map {|i| "node#{i}.example.org"}
+  nodes = (1..(ENV["NUM_NODES"]||1).to_i).map {|i| "node#{i}.example.org"}
   verbosity = ENV["VERBOSITY"]||""
+  playbook = ENV["PLAYBOOK"]||"playbooks/deploy.yml"
+  node_ram = (ENV["NODE_RAM"]||recommended_node_ram(nodes.length())).to_i
+  puts "Allocating #{node_ram}MiB RAM to each node in the cluster"
 
   config.hostmanager.enabled = true
-  config.hostmanager.manage_host = false
-  config.hostmanager.manage_guest = false
+  config.hostmanager.manage_host = true
+  config.hostmanager.manage_guest = true
   config.hostmanager.ignore_private_ip = false
   config.hostmanager.include_offline = false
 
@@ -19,119 +34,77 @@ Vagrant.configure("2") do |config|
     }
   end
 
-  if (ENV["ATOMIC"] != 'false')
-    config.vm.box = "fedora/28-atomic-host"
-  else
-      config.vm.box = "centos/7"
-      config.vm.provision :shell, :inline => <<-EOF
-        set -x
-        yum install -y python3 libselinux-python epel-release
-        yum remove -y python2-docker
-        cat > /etc/yum.repos.d/CentOS-OpenShift-Origin-CBS.repo <<- EOF2
-    [centos-openshift-origin-testing-cbs]
-    name=CentOS OpenShift Origin Testing CBS
-    baseurl=https://cbs.centos.org/repos/paas7-openshift-origin310-testing/x86_64/os/
-    enabled=1
-    gpgcheck=0
-    gpgkey=file:///etc/pki/rpm-gpg/openshift-ansible-CentOS-SIG-PaaS
-  EOF2
-      EOF
-  end
+  config.vm.box = "centos/7"
 
   config.vm.provision :file, :source => "~/.ssh/id_rsa.pub", :destination => "/tmp/key"
   config.vm.provision :shell, :inline => <<-EOF
     cat /tmp/key >> /home/vagrant/.ssh/authorized_keys
     mkdir -p /root/.ssh
     cp /home/vagrant/.ssh/authorized_keys /root/.ssh/authorized_keys
-    sed -i 's/127.0.0.1.*master.example.org/192.168.17.11 master.example.org/' /etc/hosts
   EOF
 
-  if !ENV['ONLY_NODES']
-    config.vm.define 'master.example.org', :primary => true do |master|
-      master.vm.hostname = 'master.example.org'
-      master.hostmanager.enabled = true
-      master.hostmanager.manage_host = true
-      master.hostmanager.manage_guest = false
-      master.vm.network :private_network,
-        :mac => "52:11:22:33:44:41",
-        :ip => '192.168.17.11',
-        :libvirt__network_name => "home-cluster",
-        :libvirt__dhcp_enabled => true,
-        :libvirt__netmask => "255.255.255.0",
-        :libvirt__dhcp_bootp_server => "192.168.17.11"
-
-      master.vm.provider :libvirt do |domain|
-        domain.storage :file, :size => '40G', :type => 'raw'
-        domain.storage :file, :size => '40G', :type => 'raw'
-      end
-      master.vm.synced_folder '.', '/vagrant', disabled: true
-
-
-      # if machine_id == N
-      # machine.vm.provision :ansible do |ansible|
-      #   # Disable default limit to connect to all the machines
-      #   ansible.limit = "all"
-      #   ansible.playbook = "playbook.yml"
-      # if Vagrant.has_plugin?("vagrant-triggers") and nodes.length > 0
-      #   config.trigger.after [:provision, :up] do
-          # nodes.each do |node|
-            # run "vagrant up #{node}"
-            # sleep 10
-          # end
-          # extra_vars = {
-          #   :number_of_hosts => nodes.length,
-          #   :prompt_for_hosts => false,
-          #   :modify_etc_hosts => true,
-          #   :glusterfs_wipe => true
-          # }
-          # run "ansible-playbook playbooks/nodes.yml -e '#{extra_vars.to_json}' -i inventory -l 'all,localhost' #{verbosity == '' ? '' : '-' + verbosity}"
-        # end
-    end
-  end
-
-  host_vars = {
-    "master.example.org" => {
-      "ansible_host" => "192.168.17.11",
-      "master_subdomain" => "example.org"
-    }
-  }
+  host_vars = {}
   nodes.each_with_index do |name, idx|
     config.vm.define name, :autostart => true do |node|
-      # node.hostmanager.manage_guest = false
-      # node.hostmanager.manage_host = false
       node.vm.hostname = name
-      node_ip = "192.168.17.#{12 + idx}"
+      node.vm.synced_folder '.', '/vagrant', disabled: true
 
-      host_vars[name] = {"ansible_host" => node_ip}
+      if idx == 0
+        # Configure NFS on master to test out backups
+        config.vm.provision :shell, :inline => <<-EOF
+          yum install -y nfs-utils
+          mkdir -p /export/backup
+          chmod -R 777 /export
+          chown nfsnobody:nfsnobody /export
+
+          systemctl enable rpcbind
+          systemctl enable nfs-server
+          systemctl enable nfs-lock
+          systemctl enable nfs-idmap
+          systemctl start rpcbind
+          systemctl start nfs-server
+          systemctl start nfs-lock
+          systemctl start nfs-idmap
+
+          echo "/export    $(ip addr show eth1 | grep 'inet ' | awk '{printf $2}' | awk -F '/' '{print $1}')(rw,sync,no_root_squash,no_all_squash)" > /etc/exports
+
+          systemctl restart nfs-server
+        EOF
+      end
 
       node.vm.network :private_network,
-        :ip => node_ip
+        :ip => "192.168.17.#{10 + idx}",
+        :libvirt__dhcp_enabled => false
+
       node.vm.provider :libvirt do |domain|
-        domain.storage :file, :size => '40G', :type => 'raw'
-        domain.storage :file, :size => '40G', :type => 'raw'
-        # domain.mgmt_attach = 'false'
-        # domain.management_network_name = 'home-cluster'
-        # domain.management_network_address = "192.168.17.0/24"
-        # domain.management_network_mode = "nat"
-        # domain.boot 'network'
-        # domain.boot 'hd'
+        domain.storage :file, :size => '10G', :type => 'raw'
+        domain.storage :file, :size => '10G', :type => 'raw' if nodes.length() < 3
+        domain.storage :file, :size => '10G', :type => 'raw' if nodes.length() < 2
       end
       if idx == nodes.size - 1
         # Kick off provisioning
         node.vm.provision :ansible do |ansible|
           ansible.groups = {
-            "first_master" => ["master.example.org"],
-            "masters" => ["master.example.org"],
+            "first_node" => nodes[0],
+            "first_node:vars" => {
+              "kubernetes_master" => true,
+              "metallb_ip_range" => "192.168.17.100-192.168.17.200",
+              "storage_data_replicas" => 3,
+              "storage_metadata_replicas" => 3,
+              "nfs_backup_share_path": "/export/backup",
+              "nfs_backup_server": "node1.example.org",
+            },
             "nodes" => nodes,
-            "OSEv3:children" => ["masters", "nodes"]
+            "nodes:vars" => {"kubernetes_node" => true},
           }
           ansible.verbose = verbosity
-          ansible.playbook = 'playbooks/deploy.yml'
+          ansible.playbook = playbook
           ansible.become = true
           ansible.force_remote_user = false
           ansible.limit = 'all,localhost'
           ansible.raw_ssh_args = ["-o IdentityFile=~/.ssh/id_rsa"]
           ansible.host_vars = host_vars
+          ansible.extra_vars = 'config.yml'
         end
       end
     end
@@ -140,7 +113,8 @@ Vagrant.configure("2") do |config|
 
   config.vm.provider :libvirt do |libvirt|
     libvirt.driver = "kvm"
-    libvirt.memory = 8000
+    libvirt.memory = node_ram
     libvirt.cpus = `grep -c ^processor /proc/cpuinfo`.to_i
+    libvirt.qemu_use_session = false
   end
 end

@@ -1,0 +1,118 @@
+---
+- hosts: nodes
+  become: yes
+
+  tasks:
+    - import_role:
+        name: install_kubeadm
+
+- hosts: first_node
+  become: yes
+
+  vars:
+    master_node_schedulable: false
+    artifacts_dir: "{{ (playbook_dir + '/../artifacts') | realpath }}"
+
+  tasks:
+    - name: Verify connection to gcr.io image registry
+      command: kubeadm config images pull
+      changed_when: false
+
+    - name: Check component statuses
+      community.kubernetes.k8s_info:
+        api_version: v1
+        kind: ComponentStatus
+      ignore_errors: yes
+      register: k8s_cs
+
+    - debug: var=k8s_cs
+
+    - name: Run kubeadm init
+      command: kubeadm init
+      when: k8s_cs is failed
+
+    - name: Create root .kube directory
+      file:
+        path: /root/.kube
+        state: directory
+
+    - name: Copy admin kubeconfig to root user
+      copy:
+        src: /etc/kubernetes/admin.conf
+        dest: /root/.kube/config
+        remote_src: yes
+
+    - name: Retrieve admin kubeconfig and store it at {{ artifacts_dir }}/kubeconfig
+      fetch:
+        dest: '{{ artifacts_dir }}/kubeconfig'
+        src: /root/.kube/config
+        flat: yes
+
+    - name: Get list of nodes
+      community.kubernetes.k8s_info:
+        api_version: v1
+        kind: Node
+      register: k8s_nodes
+
+    - name: Untaint master node
+      community.kubernetes.k8s:
+        api_version: v1
+        kind: Node
+        name: '{{ item.metadata.name }}'
+        definition:
+          spec:
+            taints: '{{ item.spec.taints | rejectattr("key", "eq", "node-role.kubernetes.io/master") | list }}'
+      loop: '{{ k8s_nodes.resources }}'
+      when: master_node_schedulable and item.spec.taints is defined and item.spec.taints
+
+    - name: Install Calico Pod Network plugin
+      community.kubernetes.k8s:
+        definition: "{{ item }}"
+        kubeconfig: /etc/kubernetes/admin.conf
+      loop: '{{ lookup("url", "https://docs.projectcalico.org/v3.14/manifests/calico.yaml", split_lines=False) | from_yaml_all | list }}'
+      when: item is not none
+
+- name: Join remaining nodes to cluster
+  hosts: nodes,!first_node
+
+  vars:
+    kubeadm_join_cmd: '{{ kubeadm_join_cmd_raw.stdout }}'
+    kubeadm_token_id: "{{ kubeadm_join_cmd_raw.stdout | regex_replace('.*--token ([A-z0-9]*)\\..*', '\\1') }}"
+
+  tasks:
+
+    - name: Get node
+      community.kubernetes.k8s_info:
+        api_version: v1
+        kind: Node
+        name: '{{ inventory_hostname }}'
+      delegate_to: '{{ groups.first_node.0 }}'
+      register: kubeadm_node
+
+    - name: Get kubeadm join command
+      command: kubeadm token create --print-join-command
+      delegate_to: '{{ groups.first_node.0 }}'
+      register: kubeadm_join_cmd_raw
+      when: not kubeadm_node.resources
+
+    - name: Join node to cluster
+      command: '{{ kubeadm_join_cmd }}'
+      args:
+        creates: /etc/kubernetes/kubelet.conf
+      when: not kubeadm_node.resources
+
+    - name: Ensure node is a worker
+      k8s:
+        definition:
+          apiVersion: v1
+          kind: Node
+          metadata:
+            name: '{{ inventory_hostname }}'
+            labels:
+              node-role.kubernetes.io/worker: ""
+      delegate_to: '{{ groups.first_node.0 }}'
+
+    - name: Delete kubeadm join token
+      command: kubeadm token delete {{ kubeadm_token_id }}
+      delegate_to: '{{ groups.first_node.0 }}'
+      when: not kubeadm_node.resources

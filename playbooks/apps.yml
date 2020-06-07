@@ -1,0 +1,29 @@
+---
+- name: Deploy applications to cluster
+  hosts: first_node
+
+  vars:
+    deploy_murmur: true
+    artifacts_dir: "{{ (playbook_dir + '/../artifacts') | realpath }}"
+
+  tasks:
+    - name: Deploy murmur server
+      import_role:
+        name: k8s_murmur
+      vars:
+        murmur_password_file: '{{ artifacts_dir }}/mumble_password.txt'
+      when: deploy_murmur
+
+    - name: Store results
+      copy:
+        content: |
+          status: Mumble has been successfully deployed.
+          address: {{ ip }}
+          port: 64738
+          username: SuperUser
+          password: Stored in {{ password_file }}
+        dest: '{{ artifacts_dir }}/results/06-murmur-server.yml'
+      vars:
+        ip: '{{ murmur_udp.resources.0.status.loadBalancer.ingress.0.ip }}'
+        password_file: '{{ artifacts_dir }}/mumble_password.txt'
+      delegate_to: localhost

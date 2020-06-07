@@ -1,0 +1,137 @@
+---
+- name: Create namespace
+  community.kubernetes.k8s:
+    api_version: v1
+    kind: Namespace
+    name: murmur
+
+- name: Create PVCs
+  community.kubernetes.k8s:
+    definition:
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: '{{ item }}'
+        namespace: murmur
+        labels:
+          app: murmur
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+  loop:
+    - murmur-config
+    - murmur-db
+
+- name: Create deployment
+  community.kubernetes.k8s:
+    definition:
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: murmur-deployment
+        namespace: murmur
+        labels:
+          app: murmur
+      spec:
+        selector:
+          matchLabels:
+            app: murmur
+        template:
+          metadata:
+            labels:
+              app: murmur
+            annotations:
+              backup.velero.io/backup-volumes: murmur-config,murmur-db
+          spec:
+            containers:
+            - image: goofball222/murmur:latest
+              imagePullPolicy: Always
+              env:
+                - name: RUN_CHOWN
+                  value: "false"
+              name: murmur-container
+              stdin: true
+              tty: true
+              ports:
+              - containerPort: 64738
+              readinessProbe:
+                exec:
+                  command: ["nc", "-u", "-z", "-w", "3", "localhost", "64738"]
+                initialDelaySeconds: 5
+                periodSeconds: 10
+              livenessProbe:
+                exec:
+                  command: ["nc", "-u", "-z", "-w", "3", "localhost", "64738"]
+                initialDelaySeconds: 30
+                periodSeconds: 10
+              volumeMounts:
+              - mountPath: /opt/murmur/config
+                name: murmur-config
+              - mountPath: /opt/murmur/data
+                name: murmur-db
+            volumes:
+            - name: murmur-config
+              persistentVolumeClaim:
+                claimName: murmur-config
+            - name: murmur-db
+              persistentVolumeClaim:
+                claimName: murmur-db
+
+- name: Create murmur udp service
+  community.kubernetes.k8s:
+    definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: murmur-udp
+        namespace: murmur
+        labels:
+          app: murmur
+        annotations:
+          metallb.universe.tf/allow-shared-ip: "true"
+      spec:
+        type: LoadBalancer
+        ports:
+          - name: murmur-udp
+            port: 64738
+            protocol: UDP
+        selector:
+          app: murmur
+
+- name: Wait for murmur service to receive an IP
+  community.kubernetes.k8s_info:
+    api_version: v1
+    kind: Service
+    name: murmur-udp
+    namespace: murmur
+  register: murmur_udp
+  until: "(murmur_udp.resources.0.status.get('loadBalancer', {}).get('ingress', []).0|default({})).ip is defined"
+
+- name: Create murmur tcp service
+  community.kubernetes.k8s:
+    definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: murmur-tcp
+        namespace: murmur
+        labels:
+          app: murmur
+        annotations:
+          metallb.universe.tf/allow-shared-ip: "true"
+      spec:
+        type: LoadBalancer
+        loadBalancerIP: '{{ murmur_udp.resources.0.status.loadBalancer.ingress.0.ip }}'
+        ports:
+          - name: murmur-tcp
+            port: 64738
+            protocol: TCP
+        selector:
+          app: murmur
+
+- name: Set SuperUser password
+  import_tasks: set_superuser_password.yml
+  when: murmur_password_file is defined

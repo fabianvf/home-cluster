@@ -1,0 +1,6 @@
+---
+velero_version: v1.4.0
+
+cluster_subdomain: example.org
+
+artifacts_dir: "./"
