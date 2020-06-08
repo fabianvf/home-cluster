@@ -1,0 +1,16 @@
+galaxy_info:
+  author: Fabian von Feilitzsch
+  description: Installs velero with minio as an NFS gateway for cluster backup
+  license: AGPL-3.0-or-later
+  min_ansible_version: 2.9
+  platforms:
+    - name: Centos
+      versions:
+      - 7
+
+  galaxy_tags:
+    - kubernetes
+    - homelab
+
+dependencies:
+  - community.kubernetes
