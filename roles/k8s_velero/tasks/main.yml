@@ -66,6 +66,9 @@
         clusterDomain: '{{ cluster_subdomain }}'
         secretKey: '{{ lookup("password", secret_key_opts) }}'
         accessKey: '{{ lookup("password", access_key_opts) }}'
+        resources:
+          requests:
+            memory: '{{ minio_memory }}'
       wait: yes
     vars:
       secret_key_opts: "{{ artifacts_dir }}/minio_secret_key.txt chars=ascii_letters,digits length=40"

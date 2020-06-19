@@ -33,6 +33,7 @@
 # nfs_backup_server: nfs.example.org
 
 helm_version: v3.2.1
+minio_memory: 500Mi
 
 # Alter schedule for backup using cron syntax. Default is once per day.
 velero_backup_schedule: '0 7 * * *'
