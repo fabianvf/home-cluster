@@ -3,8 +3,12 @@
   hosts: first_node
 
   vars:
+    cluster_subdomain: example.org
     deploy_murmur: true
+    deploy_homer: true
     artifacts_dir: "{{ (playbook_dir + '/../artifacts') | realpath }}"
+    application_icon: 'fas fa-user-ninja'
+    admin_icon: 'fas fa-toolbox'
 
   tasks:
     - name: Deploy murmur server
@@ -26,4 +30,40 @@
       vars:
         ip: '{{ murmur_udp.resources.0.status.loadBalancer.ingress.0.ip }}'
         password_file: '{{ artifacts_dir }}/mumble_password.txt'
+      delegate_to: localhost
+
+    - name: Assemble Homer services
+      assemble:
+        src: '{{ artifacts_dir }}/homer/'
+        dest: '{{ artifacts_dir }}/homer/{{ item }}.yml'
+        regexp: '{{ item }}_.*.yml'
+        delimiter: "\n---\n"
+        ignore_hidden: yes
+      loop: ['admin', 'app']
+      delegate_to: localhost
+
+    - name: Deploy Homer dashboard
+      import_role:
+        name: k8s_homer
+      vars:
+        homer_host: 'dashboard.{{ cluster_subdomain }}'
+        homer_services:
+          - name: Applications
+            icon: '{{ application_icon }}'
+            items: '{{ lookup("file", artifacts_dir + "/homer/app.yml") | from_yaml_all | list }}'
+          - name: Admin Interfaces
+            icon: '{{ admin_icon }}'
+            items: '{{ lookup("file", artifacts_dir + "/homer/admin.yml") | from_yaml_all | list }}'
+      when: deploy_homer
+
+    - name: Store results
+      copy:
+        content: |
+          status: Homer has been successfully deployed.
+          address: dashboard.{{ cluster_subdomain }}
+          configMap:
+            name: homer-config
+            namespace: homer
+          message: To manually update the Homer configuration, edit the configmap referenced above.
+        dest: '{{ artifacts_dir }}/results/07-homer-dashboard.yml'
       delegate_to: localhost

@@ -1,0 +1,103 @@
+---
+- name: Create namespace
+  community.kubernetes.k8s:
+    api_version: v1
+    kind: Namespace
+    name: homer
+
+- name: Create homer configuration
+  community.kubernetes.k8s:
+    definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: homer-config
+        namespace: homer
+      data:
+        config: |
+          {{ lookup("template", "config.yaml.j2") }}
+
+- name: Create deployment
+  community.kubernetes.k8s:
+    definition:
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: homer
+        namespace: homer
+        labels:
+          app: homer
+      spec:
+        selector:
+          matchLabels:
+            app: homer
+        template:
+          metadata:
+            labels:
+              app: homer
+          spec:
+            containers:
+            - image: b4bz/homer:latest
+              imagePullPolicy: Always
+              name: homer-container
+              command: ["ln", "-s", "/config/config.yml", "/www/config.yml", "&&", "darkhttpd", "/www/", "--no-listing"]
+              stdin: true
+              tty: true
+              ports:
+              - containerPort: 8080
+              readinessProbe:
+                tcpSocket:
+                  port: 8080
+                initialDelaySeconds: 5
+                periodSeconds: 10
+              livenessProbe:
+                tcpSocket:
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 60
+              volumeMounts:
+              - mountPath: /config/
+                name: homer-config
+            volumes:
+            - name: homer-config
+              configMap:
+                name: homer-config
+                items:
+                  - key: config
+                    path: config.yml
+
+- name: Create homer service
+  community.kubernetes.k8s:
+    definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: homer
+        namespace: homer
+        labels:
+          app: homer
+      spec:
+        ports:
+          - name: web
+            port: 8080
+            protocol: TCP
+        selector:
+          app: homer
+
+- name: Create homer ingress
+  community.kubernetes.k8s:
+    definition:
+      apiVersion: networking.k8s.io/v1beta1
+      kind: Ingress
+      metadata:
+        name: homer
+        namespace: homer
+      spec:
+        rules:
+        - host: '{{ homer_host }}'
+          http:
+            paths:
+            - path: /
+              backend:
+                serviceName: homer
+                servicePort: web
