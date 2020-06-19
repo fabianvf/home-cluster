@@ -20,6 +20,7 @@ Vagrant.configure("2") do |config|
   playbook = ENV["PLAYBOOK"]||"playbooks/deploy.yml"
   node_ram = (ENV["NODE_RAM"]||recommended_node_ram(nodes.length())).to_i
   puts "Allocating #{node_ram}MiB RAM to each node in the cluster" if ARGV.include?("up")
+  kubernetes_version = ENV["KUBERNETES_VERSION"]||"stable-1"
 
   config.hostmanager.enabled = true
   config.hostmanager.manage_host = true
@@ -93,6 +94,7 @@ Vagrant.configure("2") do |config|
               "storage_metadata_replicas" => 3,
               "nfs_backup_share_path": "/export/backup",
               "nfs_backup_server": "node1.example.org",
+              "kubernetes_version": kubernetes_version,
             },
             "nodes" => nodes,
             "nodes:vars" => {"kubernetes_node" => true},

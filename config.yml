@@ -3,6 +3,9 @@
 # User variables                                                          #
 ###########################################################################
 
+# Defaults to latest stable, change if you want a specific Kubernetes version
+# kubernetes_version: stable-1
+
 # Change this to an IP range reserved on your network
 # metallb_ip_range: '192.168.17.100-192.168.17.200'
 

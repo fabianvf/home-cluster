@@ -2,6 +2,9 @@
 - hosts: nodes
   become: yes
 
+  vars:
+    kubernetes_version: stable-1
+
   tasks:
     - import_role:
         name: install_kubeadm
@@ -15,7 +18,7 @@
 
   tasks:
     - name: Verify connection to gcr.io image registry
-      command: kubeadm config images pull
+      command: kubeadm config images pull --kubernetes-version {{ kubernetes_version }}
       changed_when: false
 
     - name: Check component statuses
@@ -28,7 +31,7 @@
     - debug: var=k8s_cs
 
     - name: Run kubeadm init
-      command: kubeadm init
+      command: kubeadm init --kubernetes-version {{ kubernetes_version }}
       when: k8s_cs is failed
 
     - name: Create root .kube directory
@@ -102,7 +105,7 @@
       when: not kubeadm_node.resources
 
     - name: Ensure node is a worker
-      k8s:
+      community.kubernetes.k8s:
         definition:
           apiVersion: v1
           kind: Node
