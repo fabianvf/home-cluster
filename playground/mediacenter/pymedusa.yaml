@@ -49,7 +49,7 @@ spec:
       containers:
       - image: pymedusa/medusa
         imagePullPolicy: Always
-        name: pymedusa-container
+        name: pymedusa
         ports:
         - containerPort: 8081
         readinessProbe:
@@ -58,8 +58,8 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 10
         livenessProbe:
-          tcpSocket:
-            port: 8081
+          exec: 
+            command: ['sh', '-c', 'wget -q --spider localhost:8081 && ls /downloads && ls /series']
           initialDelaySeconds: 30
           periodSeconds: 10
         volumeMounts:
