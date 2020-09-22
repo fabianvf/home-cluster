@@ -15,8 +15,10 @@
   yum:
     name:
       - containerd.io-1.2.13
-      - docker-ce-19.03.8
-      - docker-ce-cli-19.03.8
+      - docker-ce-19.03.11
+      - docker-ce-cli-19.03.11
+    enablerepo:
+      - docker-ce-stable
 
 - name: Create docker directory
   file:
