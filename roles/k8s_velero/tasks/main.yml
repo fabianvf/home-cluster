@@ -107,7 +107,7 @@
     --bucket velero
     --secret-file /etc/velero/credentials-velero
     --use-volume-snapshots=false
-    --backup-location-config region=minio,s3ForcePathStyle="true",s3Url=http://minio.{{ cluster_subdomain }}
+    --backup-location-config region=minio,s3ForcePathStyle="true",s3Url=http://minio.velero.svc:9000
     --use-restic
     --wait
   tags: ['skip_ansible_lint']
