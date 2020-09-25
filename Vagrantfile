@@ -53,6 +53,7 @@ Vagrant.configure("2") do |config|
       if idx == 0
         # Configure NFS on master to test out backups
         config.vm.provision :shell, :inline => <<-EOF
+          set -x
           yum install -y nfs-utils
           mkdir -p /export/backup
           chmod -R 777 /export
@@ -67,7 +68,7 @@ Vagrant.configure("2") do |config|
           systemctl start nfs-lock
           systemctl start nfs-idmap
 
-          echo "/export    $(ip addr show eth1 | grep 'inet ' | awk '{printf $2}' | awk -F '/' '{print $1}')(rw,sync,no_root_squash,no_all_squash)" > /etc/exports
+          echo "/export    *(rw,sync,no_root_squash,no_all_squash)" > /etc/exports
 
           systemctl restart nfs-server
         EOF
@@ -116,7 +117,7 @@ Vagrant.configure("2") do |config|
   config.vm.provider :libvirt do |libvirt|
     libvirt.driver = "kvm"
     libvirt.memory = node_ram
-    libvirt.cpus = `grep -c ^processor /proc/cpuinfo`.to_i
+    libvirt.cpus = `grep -c ^processor /proc/cpuinfo`.to_i / 2
     libvirt.qemu_use_session = false
   end
 end

@@ -10,8 +10,8 @@
 
 - name: Add stable chart repo
   community.kubernetes.helm_repository:
-    name: stable
-    repo_url: "https://kubernetes-charts.storage.googleapis.com"
+    name: minio
+    repo_url: "https://helm.min.io"
 
 - name: Create namespace
   community.kubernetes.k8s:
@@ -40,50 +40,41 @@
         storageClassName: '{{ backup_nfs_pv.spec.storageClassName }}'
         volumeName: '{{ backup_nfs_pv.metadata.name }}'
 
-- block:
-  - name: Install MinIO as a NAS gateway
-    community.kubernetes.helm:
-      name: minio
-      namespace: velero
-      chart_ref: stable/minio
-      values:
-        buckets:
-          - name: velero
-            policy: "none"
-            purge: false
-        defaultBucket:
-          enabled: yes
-          name: velero
+- name: Install MinIO as a NAS gateway
+  community.kubernetes.helm:
+    name: minio
+    namespace: velero
+    create_namespace: yes
+    atomic: yes
+    chart_ref: minio/minio
+    values:
+      buckets:
+        - name: velero
+          policy: "none"
+          purge: false
+      defaultBucket:
+        enabled: yes
+        name: velero
+      replicas: 1
+      nasgateway:
+        enabled: true
         replicas: 1
-        nasgateway:
-          enabled: true
-        persistence:
-          existingClaim: minio-nfs
-        ingress:
-          enabled: true
-          hosts:
-            - minio.{{ cluster_subdomain }}
-        clusterDomain: '{{ cluster_subdomain }}'
-        secretKey: '{{ lookup("password", secret_key_opts) }}'
-        accessKey: '{{ lookup("password", access_key_opts) }}'
-        resources:
-          requests:
-            memory: '{{ minio_memory }}'
-      wait: yes
-    vars:
-      secret_key_opts: "{{ artifacts_dir }}/minio_secret_key.txt chars=ascii_letters,digits length=40"
-      access_key_opts: "{{ artifacts_dir }}/minio_access_key.txt chars=ascii_letters,digits length=20"
-
-  rescue:
-    - name: Uninstall failed minio release
-      community.kubernetes.helm:
-        name: minio
-        namespace: velero
-        state: absent
-
-    - name: Failed to install minio
-      fail:
-        msg: 'Failed in task {{ ansible_failed_task.name }}, result: {{ ansible_failed_result }}'
+      persistence:
+        existingClaim: minio-nfs
+      ingress:
+        enabled: true
+        hosts:
+          - minio.{{ cluster_subdomain }}
+      clusterDomain: '{{ cluster_subdomain }}'
+      secretKey: '{{ lookup("password", secret_key_opts) }}'
+      accessKey: '{{ lookup("password", access_key_opts) }}'
+      resources:
+        requests:
+          memory: '{{ minio_memory }}'
+    wait: yes
+  vars:
+    secret_key_opts: "{{ artifacts_dir }}/minio_secret_key.txt chars=ascii_letters,digits length=40"
+    access_key_opts: "{{ artifacts_dir }}/minio_access_key.txt chars=ascii_letters,digits length=20"
 
 - name: Create velero configuration directory
   file:
