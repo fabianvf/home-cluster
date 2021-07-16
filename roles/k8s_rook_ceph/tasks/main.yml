@@ -148,12 +148,18 @@
       metadata:
         name: rook-ceph-mgr-dashboard
         namespace: rook-ceph
+        annotations:
+          cert-manager.io/cluster-issuer: '{{ cluster_issuer_name }}'
       spec:
         rules:
-        - host: rook-ceph.{{ cluster_subdomain }}
-          http:
-            paths:
-            - path: /
-              backend:
-                serviceName: rook-ceph-mgr-dashboard
-                servicePort: dashboard
+          - host: rook-ceph.{{ cluster_subdomain }}
+            http:
+              paths:
+              - path: /
+                backend:
+                  serviceName: rook-ceph-mgr-dashboard
+                  servicePort: http-dashboard
+        tls:
+          - hosts:
+            - rook-ceph.{{ cluster_subdomain }}
+            secretName: rook-ceph-mgr-dashboard-cert

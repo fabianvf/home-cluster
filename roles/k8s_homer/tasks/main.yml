@@ -92,12 +92,18 @@
       metadata:
         name: homer
         namespace: homer
+        annotations:
+          cert-manager.io/cluster-issuer: '{{ cluster_issuer_name }}'
       spec:
         rules:
-        - host: '{{ homer_host }}'
-          http:
-            paths:
-            - path: /
-              backend:
-                serviceName: homer
-                servicePort: web
+          - host: '{{ homer_host }}'
+            http:
+              paths:
+              - path: /
+                backend:
+                  serviceName: homer
+                  servicePort: web
+        tls:
+          - hosts:
+            - '{{ homer_host }}'
+            secretName: homer-cert

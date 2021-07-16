@@ -1,0 +1,43 @@
+---
+- name: Create test Namespace
+  community.kubernetes.k8s:
+    api_version: v1
+    kind: Namespace
+    name: cert-manager-test
+
+- name: Create test Issuer
+  community.kubernetes.k8s:
+    definition:
+      apiVersion: cert-manager.io/v1alpha2
+      kind: Issuer
+      metadata:
+        name: test-selfsigned
+        namespace: cert-manager-test
+      spec:
+        selfSigned: {}
+
+- name: Create test Certificate
+  community.kubernetes.k8s:
+    definition:
+      apiVersion: cert-manager.io/v1alpha2
+      kind: Certificate
+      metadata:
+        name: selfsigned-cert
+        namespace: cert-manager-test
+      spec:
+        dnsNames:
+          - example.org
+        secretName: selfsigned-cert-tls
+        issuerRef:
+          name: test-selfsigned
+    wait: yes
+    wait_condition:
+      type: Ready
+      status: "True"
+
+- name: Delete cert-manager-test namespace
+  community.kubernetes.k8s:
+    api_version: v1
+    kind: Namespace
+    name: cert-manager-test
+    state: absent

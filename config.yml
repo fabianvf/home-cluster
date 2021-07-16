@@ -35,6 +35,15 @@
 helm_version: v3.2.1
 minio_memory: 500Mi
 
+# This should be a list of resources necessary to create a Issuer for cert-manager
+# Likely this will include a secret for interacting with the API for your DNS server
+# as well as a ClusterIssuer resource.
+issuer_resources: []
+
+# The name of the ClusterIssuer that ingresses will be configured with. If you set up your
+# own ClusterIssuer above replace this field with its name
+default_cluster_issuer: selfsigned
+
 # Alter schedule for backup using cron syntax. Default is once per day.
 velero_backup_schedule: '0 7 * * *'
 

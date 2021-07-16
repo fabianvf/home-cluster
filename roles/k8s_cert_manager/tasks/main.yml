@@ -1,0 +1,38 @@
+---
+- name: Add jetstack helm repo
+  community.kubernetes.helm_repository:
+    name: jetstack
+    url: https://charts.jetstack.io
+
+- name: Create namespace
+  community.kubernetes.k8s:
+    api_version: v1
+    kind: Namespace
+    name: cert-manager
+
+- name: Install cert-manager
+  community.kubernetes.helm:
+    name: cert-manager
+    namespace: cert-manager
+    chart_ref: jetstack/cert-manager 
+    values:
+      installCRDs: true
+      version: '{{ cert_manager_version }}'
+
+- name: Create default self-signed issuer
+  community.kubernetes.k8s:
+    definition:
+      apiVersion: cert-manager.io/v1alpha2
+      kind: ClusterIssuer
+      metadata:
+        name: selfsigned
+        namespace: cert-manager
+      spec:
+        selfSigned: {}
+  when: (create_issuer|bool) and not (issuer_resources|bool)
+
+- name: Create provided issuer resource
+  community.kubernetes.k8s:
+    definition: '{{ item }}'
+  loop: '{{ issuer_resources }}'
+  when: (create_issuer|bool) and (issuer_resources|bool)

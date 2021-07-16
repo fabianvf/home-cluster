@@ -1,0 +1,10 @@
+---
+cluster_subdomain: example.org
+
+cert_manager_version: '{{ omit }}'
+
+create_issuer: true
+
+# Pass a list of resources, including a full Issuer definition here if you want more than
+# a self-signed ClusterIssuer
+issuer_resources: []

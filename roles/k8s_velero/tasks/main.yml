@@ -63,6 +63,13 @@
           enabled: true
           hosts:
             - minio.{{ cluster_subdomain }}
+          # annotations:
+          #   cert-manager.io/cluster-issuer: '{{ cluster_issuer_name }}'
+          # tls:
+          #   - hosts:
+          #     - minio.{{ cluster_subdomain }}
+          #     secretName: minio-cert
+
         clusterDomain: '{{ cluster_subdomain }}'
         secretKey: '{{ lookup("password", secret_key_opts) }}'
         accessKey: '{{ lookup("password", access_key_opts) }}'

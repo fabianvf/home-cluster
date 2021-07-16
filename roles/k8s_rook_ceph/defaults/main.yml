@@ -1,6 +1,8 @@
 ---
 cluster_subdomain: example.org
 
+cluster_issuer_name: selfsigned
+
 storage_metadata_replicas: 3
 storage_data_replicas: 3
 storage_block_create: false
