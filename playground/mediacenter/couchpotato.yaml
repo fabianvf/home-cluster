@@ -60,10 +60,10 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 10
         livenessProbe:
-          tcpSocket:
-            port: 5050
-          initialDelaySeconds: 60
-          periodSeconds: 10
+          exec:
+            command: ['bash', '-c', '</dev/tcp/localhost/5050 && ls /downloads && ls /movies']
+          initialDelaySeconds: 120
+          periodSeconds: 30
         volumeMounts:
         - mountPath: /config
           name: couchpotato-config
