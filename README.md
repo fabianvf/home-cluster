@@ -1,7 +1,7 @@
-My home private cloud
+A home private cloud
 
 # Goals
-This is a repository of playbooks/scripts to deploy, configure, and manage a private cloud for your home (well, my home). Ideally I'd like this to be an easy way to set up your own home private cloud and scale it easily on hardware you have laying around. This would be useful for things like setting up your home with local network backups or connecting IOT devices (like security cameras and other sensors) without needing to send all your information to some third party.
+This is a repository of playbooks/scripts to deploy, configure, and manage a private cloud for your home. Ideally I'd like this to be an easy way to set up your own home private cloud and scale it easily on hardware you have laying around. This would be useful for things like setting up your home with local network backups or connecting IOT devices (like security cameras and other sensors) without needing to send all your information to some third party.
 
 # Motivation
 My wife is a photographer, and generates between 1TB and 3TB of media per year. I am a software engineer working on OpenShift, and have a variety of applications running on our local network, spread around a ton of hardware. I'm sick of manually configuring/fixing things, and was hoping to leverage some of my professional experience to provide a secure local network backup system for my wife, and a good platform for hosting/running applications for me.
@@ -112,4 +112,4 @@ them later using the `playbooks/apps.yml` playbook.
 
 Feel free to hop into the IRC chat, submit issues/PRs, whatever! At first this will likely be very specific to my hardware setup, but I'll work on making it more generic, which should happen naturally over time as I mix and match my hardware more.
 
-IRC discussion on [freenode #home-cluster](https://kiwiirc.com/client/irc.freenode.net/#home-cluster)
+IRC discussion on [libera.chat #home-cluster](https://kiwiirc.com/nextclient/irc.libera.chat/#home-cluster)
