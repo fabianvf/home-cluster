@@ -1,4 +1,0 @@
----
-# defaults file for kubeadm
-kubernetes_master: no
-kubernetes_node: no

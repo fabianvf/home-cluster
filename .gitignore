@@ -1,4 +1,5 @@
 *.retry
+.env
 .vagrant
 my_vars.yml
 openshift-ansible/

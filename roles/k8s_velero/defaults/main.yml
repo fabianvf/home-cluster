@@ -1,7 +1,0 @@
----
-velero_version: v1.4.0
-minio_memory: 4Gi
-
-cluster_subdomain: example.org
-
-artifacts_dir: "./"
