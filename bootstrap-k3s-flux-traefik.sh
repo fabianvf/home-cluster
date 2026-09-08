@@ -14,16 +14,99 @@ fi
 
 echo "All required environment variables found."
 
-echo "[1/7] Updating system and installing dependencies..."
+echo "[1/8] Updating system and installing dependencies..."
 sudo dnf -y update
 sudo dnf -y install curl git jq openssl
 
-echo "[2/7] Disabling firewalld for cluster networking (re-enable/tune later if needed)..."
+echo "[2/8] Configuring unattended security updates and a safe reboot window..."
+# The `dnf -y update` above only makes the box current on the DAY IT IS BUILT.
+# Nothing kept it patched afterwards: measured 2026-09-08, this node had 628
+# pending packages and 668 security advisories, 414 days after install.
+sudo dnf -y install dnf-automatic dnf-utils
+
+# security-only, and actually applied. This node's job is running k3s, so take
+# the security fixes automatically and leave feature churn for a deliberate
+# pass. reboot=never here on purpose - see the reboot policy below.
+sudo tee /etc/dnf/automatic.conf >/dev/null <<'AUTOCONF'
+[commands]
+upgrade_type = security
+random_sleep = 3600
+network_online_timeout = 60
+download_updates = yes
+apply_updates = yes
+reboot = never
+
+[emitters]
+emit_via = stdio
+AUTOCONF
+sudo systemctl enable --now dnf-automatic.timer
+
+# Reboots are NOT left to dnf-automatic, for two reasons specific to this host:
+#
+#   1. It is a single-node control plane. A reboot is a full cluster outage,
+#      with no second node to take the workload.
+#   2. It mounts NFS from the NAS. Coming back before the NAS is up leaves the
+#      media pods wedged on dead mounts.
+#
+# So: check weekly, only reboot if the kernel or a core library was actually
+# replaced, and only once the NAS answers. The NAS takes its own reboots in a
+# 04:00-05:30 window, so 06:00 Sunday sits safely after it.
+sudo tee /usr/local/sbin/reboot-if-required >/dev/null <<'REBOOTSH'
+#!/bin/bash
+set -euo pipefail
+# needs-restarting -r exits 0 when no reboot is needed, 1 when one is.
+if needs-restarting -r >/dev/null 2>&1; then
+  echo "no reboot required"
+  exit 0
+fi
+if ! ping -c 3 -W 2 omv.home.fabianism.us >/dev/null 2>&1; then
+  echo "reboot required, but the NAS is unreachable - deferring to next week"
+  exit 0
+fi
+echo "reboot required and NAS is up - rebooting"
+systemctl reboot
+REBOOTSH
+sudo chmod 0755 /usr/local/sbin/reboot-if-required
+
+sudo tee /etc/systemd/system/reboot-if-required.service >/dev/null <<'UNIT'
+[Unit]
+Description=Reboot if a kernel or core library update requires it
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/reboot-if-required
+UNIT
+
+sudo tee /etc/systemd/system/reboot-if-required.timer >/dev/null <<'UNIT'
+[Unit]
+Description=Weekly check for a pending reboot
+
+[Timer]
+OnCalendar=Sun 06:00
+Persistent=true
+RandomizedDelaySec=15min
+
+[Install]
+WantedBy=timers.target
+UNIT
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now reboot-if-required.timer
+
+# KNOWN GAP, stated rather than papered over: nothing here alerts you when
+# dnf-automatic FAILS. emit_via=stdio puts output in the journal, so a broken
+# updater is silent until someone runs `systemctl status dnf-automatic`. That
+# is the same shape of failure that let SnapRAID sit dead on the NAS for three
+# years. Worth wiring to real notification when this node gets a mail path.
+
+echo "[3/8] Disabling firewalld for cluster networking (re-enable/tune later if needed)..."
 sudo systemctl disable --now firewalld || true
 
 export K3S_KUBECONFIG_MODE="644"
 
-echo "[3/7] Installing K3s (with Traefik ingress, default)..."
+echo "[4/8] Installing K3s (with Traefik ingress, default)..."
 curl -sfL https://get.k3s.io | sh -
 
 sudo chown $USER /etc/rancher/k3s/k3s.yaml
@@ -34,7 +117,7 @@ export KUBECONFIG=~/.kube/config
 echo "Waiting for K3s to finish bootstrapping..."
 sleep 30
 
-echo "[4/7] Setting up Cloudflare ACME for Traefik wildcard TLS..."
+echo "[5/8] Setting up Cloudflare ACME for Traefik wildcard TLS..."
 
 kubectl -n kube-system delete secret cloudflare-api-token-secret --ignore-not-found
 
@@ -77,7 +160,7 @@ kubectl -n kube-system delete pod -l app.kubernetes.io/name=traefik
 
 # --- FLUX INSTALL & GITOPS BOOTSTRAP ---
 
-echo "[5/7] Installing Flux CD and bootstrapping GitOps repo..."
+echo "[6/8] Installing Flux CD and bootstrapping GitOps repo..."
 
 curl -s https://fluxcd.io/install.sh | sudo bash
 
@@ -94,7 +177,7 @@ flux bootstrap github \
 
 # --- HELLO-WORLD INGRESS DEMO ---
 
-echo "[6/7] Deploying hello-world app (https://hello.playerof.games)..."
+echo "[7/8] Deploying hello-world app (https://hello.playerof.games)..."
 
 kubectl create namespace demo || true
 
@@ -157,7 +240,7 @@ spec:
     secretName: hello-tls
 EOF
 
-echo "[7/7] Waiting for everything to become available..."
+echo "[8/8] Waiting for everything to become available..."
 
 # Wait for Traefik to be fully running
 echo "Waiting for Traefik deployment to be ready..."
