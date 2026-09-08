@@ -54,6 +54,14 @@ sudo systemctl enable --now dnf-automatic.timer
 sudo tee /usr/local/sbin/reboot-if-required >/dev/null <<'REBOOTSH'
 #!/bin/bash
 set -euo pipefail
+# FAIL CLOSED if the tool is missing. needs-restarting lives in dnf-utils, and
+# a missing binary also exits non-zero - which, treated naively, is
+# indistinguishable from "a reboot is needed" and would reboot this box every
+# single week for no reason. Ask that question explicitly.
+if ! command -v needs-restarting >/dev/null 2>&1; then
+  echo "needs-restarting not found (dnf-utils missing) - refusing to guess"
+  exit 1
+fi
 # needs-restarting -r exits 0 when no reboot is needed, 1 when one is.
 if needs-restarting -r >/dev/null 2>&1; then
   echo "no reboot required"
